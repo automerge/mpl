@@ -33,6 +33,9 @@ export default class Store {
       case "MERGE_DOCUMENT":
         newState = this.mergeDocument(state, action)
         break;
+      case "JOIN_DOCUMENT":
+        newState = this.joinDocument(state, action)
+        break;
       case "APPLY_DELTAS":
         newState = this.applyDeltas(state, action)
         break;
@@ -42,9 +45,8 @@ export default class Store {
 
     this.state = newState
 
-    if(action.type === "NEW_DOCUMENT" || action.type === "OPEN_DOCUMENT") {
+    if(action.type === "NEW_DOCUMENT" || action.type === "OPEN_DOCUMENT" || action.type === "JOIN_DOCUMENT") {
       if(this.network) this.network.disconnect()
-
       let network = new aMPLNet()
       network.connect({
         peerId: this.state._state.get("_id"),
@@ -80,6 +82,13 @@ export default class Store {
       tesseract = Tesseract.init()
       tesseract = Tesseract.set(tesseract, "docId", action.docId)
     }
+
+    return tesseract
+  }
+
+  joinDocument(state, action) {
+    let tesseract = new Tesseract.init()
+    tesseract = Tesseract.set(tesseract, "docId", action.docId)
 
     return tesseract
   }

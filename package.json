@@ -1,11 +1,19 @@
 {
   "name": "aMPL",
   "version": "0.0.1",
-  "main": "src/ampl.js",
+  "main": "lib/ampl",
   "author": "",
   "license": "ISC",
+  "presets": [
+    "es2015"
+  ],
   "dependencies": {
-    "slack-signaler": "git+ssh://git@github.com/inkandswitch/slack-signaler.git",
     "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git"
+  },
+  "devDependencies": {
+    "babel-cli": "6.24.1",
+    "babel-preset-env": "1.5.1",
+    "babel-preset-es2015": "6.24.1",
+    "babel-register": "6.24.1"
   }
 }

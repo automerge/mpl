@@ -12,7 +12,7 @@ export default class Store {
     this.state     = this.tesseractInit()
     this.listeners = []
 
-    let network = new aMPLNet()
+    let network = new aMPLNet(this.wrtc)
     network.connect({
       peerId: this.state._state.get("_id"),
       docId: this.state.docId,

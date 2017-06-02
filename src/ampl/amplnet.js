@@ -135,7 +135,6 @@ export default class aMPLNet extends EventEmitter {
   disconnect() {
     if (this.connected == false) throw "network already disconnected - connect first"
     console.log("NETWORK DISCONNECT")
-    this.store.removeAllListeners('change')
     delete this.store
     peergroup.close()
     this.connected = false

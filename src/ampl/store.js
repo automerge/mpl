@@ -8,7 +8,15 @@ export default class Store {
     this.reducer   = reducer
     this.state     = this.tesseractInit()
     this.listeners = []
-    this.network   = null
+
+    let network = new aMPLNet()
+    network.connect({
+      peerId: this.state._state.get("_id"),
+      docId: this.state.docId,
+      store: this
+    })
+
+    this.network = network
   }
 
   dispatch(action) {
@@ -35,6 +43,8 @@ export default class Store {
     this.state = newState
 
     if(action.type === "NEW_DOCUMENT" || action.type === "OPEN_DOCUMENT") {
+      if(this.network) this.network.disconnect()
+
       let network = new aMPLNet()
       network.connect({
         peerId: this.state._state.get("_id"),
@@ -42,7 +52,6 @@ export default class Store {
         store: this
       })
 
-      if(this.network) this.network.disconnect()
       this.network = network
     }
 
@@ -63,7 +72,15 @@ export default class Store {
   }
 
   openDocument(state, action) {
-    let tesseract = Tesseract.load(action.file)
+    let tesseract
+
+    if(action.file)
+      tesseract = Tesseract.load(action.file)
+    else if(action.docId) {
+      tesseract = Tesseract.init()
+      tesseract = Tesseract.set(tesseract, "docId", action.docId)
+    }
+
     return tesseract
   }
 
@@ -78,6 +95,10 @@ export default class Store {
 
   newDocument(state, action) {
     return this.tesseractInit()
+  }
+
+  removeAllListeners() {
+    this.listeners = []
   }
 
   tesseractInit() {

@@ -4,12 +4,15 @@ import Tesseract from 'tesseract'
 import EventEmitter from 'events'
 
 export default class aMPLNet extends EventEmitter {
-  constructor() {
+  constructor(wrtc) {
     super()
-
     this.token  = process.env.SLACK_BOT_TOKEN
     this.name   = process.env.NAME
     this.peergroup = peergroup
+    
+    // this is awful
+    this.peergroup.wrtc = wrtc;
+
     this.connected = false
   }
 

@@ -4,7 +4,10 @@ import uuid from './uuid'
 import aMPLNet from './amplnet'
 
 export default class Store {
-  constructor(reducer) {
+  constructor(reducer, options) {
+    if (options) {
+      this.wrtc      = options.wrtc
+    }
     this.reducer   = reducer
     this.state     = this.tesseractInit()
     this.listeners = []
@@ -47,7 +50,7 @@ export default class Store {
 
     if(action.type === "NEW_DOCUMENT" || action.type === "OPEN_DOCUMENT" || action.type === "JOIN_DOCUMENT") {
       if(this.network) this.network.disconnect()
-      let network = new aMPLNet()
+      let network = new aMPLNet(this.wrtc)
       network.connect({
         peerId: this.state._state.get("_id"),
         docId: this.state.docId,

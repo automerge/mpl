@@ -55,6 +55,12 @@ function Peer(id, name, send_signal) {
 }
 
 function initialize_peerconnection(peer) {
+  if (this.wrtc) {
+    RTCPeerConnection = wrtc.RTCPeerConnection
+    RTCSessionDescription = wrtc.RTCSessionDescription
+    RTCIceCandidate = wrtc.RTCIceCandidate
+  }
+  
   var webrtc = new RTCPeerConnection(WebRTCConfig)
 
   webrtc.onicecandidate = function(event) {

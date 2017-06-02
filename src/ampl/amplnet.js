@@ -11,7 +11,7 @@ export default class aMPLNet extends EventEmitter {
     this.peergroup = peergroup
     
     // this is awful
-    this.peergroup.wrtc = wrtc;
+    this.peergroup.setWRTC(wrtc);
 
     this.connected = false
   }

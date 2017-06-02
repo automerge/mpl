@@ -7,11 +7,13 @@
   "scripts": {
     "compile": "babel src --out-dir lib"
   },
-  "presets": [
-    "es2015"
-  ],
+  "babel": {
+    "presets": [ "env" ]
+  },
   "dependencies": {
-    "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git"
+    "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git",
+    "slack-signaler": "git+ssh://git@github.com/inkandswitch/slack-signaler.git",
+    "lz4": "0.5.3"
   },
   "devDependencies": {
     "babel-cli": "6.24.1",

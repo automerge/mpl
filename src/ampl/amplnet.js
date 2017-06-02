@@ -23,7 +23,7 @@ export default class aMPLNet extends EventEmitter {
     this.peers  = {}
     this.clocks = {}
     this.seqs = {}
-    window.PEERS = []
+    this.PEERS = []
 
     this.peer_id = this.config.peerId
     this.doc_id = this.config.docId
@@ -35,7 +35,7 @@ export default class aMPLNet extends EventEmitter {
       let bot = ss.init({doc_id: this.doc_id, name: this.name, bot_token: this.token, session: this.peer_id })
 
       peergroup.on('peer', (peer) => {
-        window.PEERS.push(peer)
+        this.PEERS.push(peer)
         this.seqs[peer.id] = 0
         if (peer.self == true) { this.SELF = peer }
         console.log("NEW PEER:", peer.id, peer.name)
@@ -49,7 +49,7 @@ export default class aMPLNet extends EventEmitter {
         this.emit('peer')
 
         peer.on('disconnect', () => {
-          window.PEERS.splice(window.PEERS.indexOf(peer))
+          this.PEERS.splice(this.PEERS.indexOf(peer))
           console.log("PEER: disconnected",peer.id)
           this.peers[peer.id].connected = false
           this.emit('peer')
@@ -100,13 +100,13 @@ export default class aMPLNet extends EventEmitter {
   broadcast(state, action) {
     if (action == "APPLY_DELTAS") {
       let clock = Tesseract.getVClock(state)
-      window.PEERS.forEach((peer) => {
+      this.PEERS.forEach((peer) => {
         peer.send({vectorClock: clock, docId: this.doc_id})
         this.peers[peer.id].messagesSent += 1
         this.emit('peer')
       })
     } else {
-      window.PEERS.forEach((peer) => {
+      this.PEERS.forEach((peer) => {
         this.updatePeer(peer, state, this.clocks[peer.id])
       })
     }
@@ -134,7 +134,7 @@ export default class aMPLNet extends EventEmitter {
   //    - close peerGroup connection so we stop receiving messages
   //    - stop any subscriptions to the store
   //    - stop any modifications/dispatches to the store
-  //    - reset window.PEERS
+  //    - reset this.PEERS
   disconnect() {
     if (this.connected == false) throw "network already disconnected - connect first"
     console.log("NETWORK DISCONNECT")

@@ -54,6 +54,10 @@ function Peer(id, name, send_signal) {
   dispatch("peer", this)
 }
 
+function setWRTC(inWrtc) {
+  wrtc = inWrtc
+}
+
 function getBrowserRTC () {
   if (typeof window === 'undefined') return null
   var wrtc = {

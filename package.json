@@ -1,0 +1,11 @@
+{
+  "name": "aMPL",
+  "version": "0.0.1",
+  "main": "src/ampl.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "slack-signaler": "git+ssh://git@github.com/inkandswitch/slack-signaler.git",
+    "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git"
+  }
+}

@@ -4,6 +4,9 @@
   "main": "lib/ampl",
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "compile": "babel src --out-dir lib"
+  },
   "presets": [
     "es2015"
   ],

@@ -1,12 +1,17 @@
-# aMPL
+## aMPL
 a Magic Persistence Layer
 
-### Guide
+## Guide
 
-   $ electron-forge init demo --template=react
-   $ npm install git+ssh://git@github.com/inkandswitch/ampl.git 
+This guide will demonstrate how to create a basic counter app using Electron, React, and aMPL. First, start by creating a new Electron app using Electron Forge with the React template.
 
-In src/app.jsx:
+    $ electron-forge init demo --template=react
+    
+Now, install aMPL:
+
+    $ npm install git+ssh://git@github.com/inkandswitch/ampl.git 
+
+In src/app.jsx, initialize the aMPL store and add the counter and increment button to the view:
 
     import React from 'react';
     import aMPL from 'ampl'
@@ -23,6 +28,7 @@ In src/app.jsx:
           }
         })
 
+        // This forces the component to update on state changes
         this.store.subscribe(() => this.setState({}))
       }
 
@@ -42,9 +48,9 @@ In src/app.jsx:
       }
     }
 
-Now start the app twice with:
+To start the app and test out synchronization, we pass a document ID in an environment variable. Both clients need the same document ID to connect to the same peer group:
 
-    $ NAME=bob    DOC_ID=1 npm start
-    $ NAME=loblaw DOC_ID=1 npm start
+    $ DOC_ID=1 npm start
+    $ DOC_ID=1 npm start
 
-Updating the counter on either client should also sync to the other now.
+On either client, try updating the counter and notice that it seamlessly syncs to the other client.

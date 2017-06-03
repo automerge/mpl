@@ -2,10 +2,10 @@
 a Magic Persistence Layer
 
 - [Guide](#guide)
-- [Development](#development)
 - [API](#api)
   * [Store](#store)
   * [Provided Actions](#provided-actions)
+- [Development](#development)
 
 ## Guide
 
@@ -72,24 +72,6 @@ Start two clients and try incrementing the counter, you should see the counters 
 $ npm start & npm start
 ```
 
-## Development
-
-### Compiling
-
-aMPL is configured via Babel to use ES2016 syntax. The source code is located in `src` and compiled code in `lib`. Make sure to compile and commit before creating a new release:
-
-```bash
-$ npm run compile
-```
-
-### Testing
-
-To run tests:
-
-```bash
-$ npm run test
-```
-
 ## API
 
 ### `Store`
@@ -143,3 +125,22 @@ this.store.dispatch({
   type: "OPEN_DOCUMENT", docId: "1234-5678-9"
 })
 ```
+
+## Development
+
+### Compiling
+
+aMPL is configured via Babel to use ES2016 syntax. The source code is located in `src` and compiled code in `lib`. Make sure to compile and commit before creating a new release:
+
+```bash
+$ npm run compile
+```
+
+### Testing
+
+To run tests:
+
+```bash
+$ npm run test
+```
+

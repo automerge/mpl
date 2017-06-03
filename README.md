@@ -1,5 +1,8 @@
-## aMPL
+# aMPL
 a Magic Persistence Layer
+
+- [Guide](#guide)
+- [Development](#development)
 
 ## Guide
 
@@ -63,4 +66,23 @@ Start two clients and try incrementing the counter, you should see the counters 
 
 ```bash
 $ npm start & npm start
+```
+
+## Development
+
+### Compiling
+
+aMPL is configured via Babel to use ES2016 syntax. The source code is located in `src` and 
+compiled code in `lib`. Make sure to compile and commit before creating a new release:
+
+```bash
+$ npm run compile
+```
+
+### Testing
+
+To run tests:
+
+```bash
+$ npm run test
 ```

@@ -32,8 +32,18 @@ describe("Store", function() {
   })
 })
 
+describe("Config", function() {
+  it("sets a shared configuration", function() {
+    aMPL.config.slackBotToken = "PVH's Token"
+
+    let store =  new aMPL.Store()
+
+    assert.equal(aMPL.config.slackBotToken, store.network.token)
+  })
+})
+
 describe("Network", function() {
-  it("synchronizes between two clients", function(done) {
+  it.skip("synchronizes between two clients", function(done) {
     this.timeout(15000)
 
     let storeA = createStore()
@@ -49,4 +59,3 @@ describe("Network", function() {
     }, 10000)
   })
 })
-

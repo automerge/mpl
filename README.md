@@ -4,6 +4,8 @@ a Magic Persistence Layer
 - [Guide](#guide)
 - [Development](#development)
 - [API](#api)
+  * [Store](#store)
+  * [Provided Actions](#provided-actions)
 
 ## Guide
 
@@ -90,22 +92,54 @@ $ npm run test
 
 ## API
 
-### Store
+### `Store`
 
 `aMPL.Store` is modeled off of [Redux](http://redux.js.org/) and follows the same basic pattern.
 
-#### new Store(reducer)
+#### `new Store(reducer)`
 
 The `Store` constructor accepts a reducer function. When an action is dispatched to the store, it first checks against aMPL's provided actions and then invokes your reducer if the action did not map to any of the provided ones.
 
-#### getState()
+#### `getState()`
 
 `getState` returns the current state object including all of your persisted data.
 
-#### dispatch(action)
+#### `dispatch(action)`
 
 `dispatch` sends an action through your reducer. You should only modify the state through `dispatch`. Note: dispatch is a synchronous function.
 
-#### subscribe(listener)
+#### `subscribe(listener)`
 
 `subscribe` allows to register a listener callback. All listeners are invoked whenver there is a state change in the store, including inbound changes that come in through other peers over the network.
+
+#### `save()`
+
+`save` returns a JSON serialization of your store's state. This is useful for persisting your state to a file, which can then be opened later by dispatching a `"OPEN_DOCUMENT"` action.
+
+
+### Provided Actions
+
+`aMPL.Store` provides several built-in actions to create, open, and merge documents. All document management should go through your `aMPL.Store` instance so that aMPL can connect to the right peer group and broadcast state changes over the network.
+
+#### `"NEW_DOCUMENT"`
+
+The `"NEW_DOCUMENT" action changes resets the store's state to a new document.  
+**Ex:**
+
+```js
+this.store.dispatch({
+  type: "NEW_DOCUMENT"
+})
+```
+
+#### `"OPEN_DOCUMENT"`
+
+The `"OPEN_DOCUMENT"` action accepts a `docId` or `file` blob as parameters (i.e. the serialized output from `aMPL.Store#save()`. 
+
+**Ex:**
+
+```js
+this.store.dispatch({
+  type: "OPEN_DOCUMENT", docId: "1234-5678-9"
+})
+```

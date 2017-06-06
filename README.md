@@ -14,15 +14,16 @@ This guide will demonstrate how to create a basic counter app using Electron, Re
 ```bash
 $ npm install -g electron-forge
 $ electron-forge init demo --template=react
+$ cd demo
 ```
 
 Now, install aMPL:
 
 ```bash
-$ npm install git+ssh://git@github.com/inkandswitch/ampl.git
+$ npm install --save git+ssh://git@github.com/inkandswitch/ampl.git
 ```
 
-In src/app.jsx, initialize the aMPL store and add the counter to the view:
+In `src/app.jsx`, initialize the aMPL store and add the counter to the view:
 
 ```js
 import React from 'react'
@@ -66,7 +67,9 @@ export default class App extends React.Component {
 }
 ```
 
-Start two clients and try incrementing the counter, you should see the counters synchronize on both clients:
+In the code above, replace `some token` with the Slack token that you obtained by *TODO instructions*.
+
+Start two clients and try incrementing the counter by clicking the button, and you should see the counters synchronize on both clients:
 
 ```bash
 $ npm start & npm start

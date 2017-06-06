@@ -1,4 +1,4 @@
-import assert from 'assert' 
+import assert from 'assert'
 import aMPL from '../src/ampl'
 import dotenv from 'dotenv'
 
@@ -29,6 +29,17 @@ describe("Store", function() {
     store.dispatch({ type: "INCREMENT" })
 
     assert.equal(1, store.getState().counter)
+  })
+
+  it("allows you to overwrite default reducer actions", function() {
+    let store = new aMPL.Store()
+    store.newDocument = (state, action) => {
+      return aMPL.Tesseract.set(state, "foo", "bar")
+    }
+
+    store.dispatch({ type: "NEW_DOCUMENT" })
+
+    assert.equal("bar", store.getState().foo)
   })
 })
 

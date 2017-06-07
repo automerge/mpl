@@ -147,3 +147,14 @@ To run tests:
 $ npm run test
 ```
 
+## Versions
+
+When its time to cut a release do the following
+
+1. ~ edit local package.json and set version number (eg. 0.0.5)
+2. git commit -a -m "set version 0.0.5"
+3. git tag v0.0.5
+4. git push --tags
+5. ~ edit trellis package.json to change the commit-ish on ampl to #v0.0.5
+6. git commit -a "bump ampl version"
+7. git push

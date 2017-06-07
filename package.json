@@ -17,7 +17,6 @@
     "debug": "2.6.8",
     "dotenv": "4.0.0",
     "lz4": "0.5.3",
-    "slack-signaler": "git+ssh://git@github.com/inkandswitch/slack-signaler.git",
     "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git"
   },
   "devDependencies": {

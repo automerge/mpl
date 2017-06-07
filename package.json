@@ -1,6 +1,6 @@
 {
   "name": "aMPL",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "main": "lib/ampl",
   "author": "",
   "license": "ISC",
@@ -14,6 +14,7 @@
     ]
   },
   "dependencies": {
+    "@slack/client": "^3.10.0",
     "debug": "2.6.8",
     "dotenv": "4.0.0",
     "lz4": "0.5.3",

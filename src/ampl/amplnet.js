@@ -1,14 +1,29 @@
 import ss from './amplnet/slack-signaler'
+import bs from './amplnet/bonjour-signaler'
+
 import peergroup from './amplnet/peergroup'
 import Tesseract from 'tesseract'
 import EventEmitter from 'events'
-import config from './config'
+
+
+function clockMax(c1,c2) {
+  let keys = Object.keys(c1).concat(Object.keys(c2))
+  let maxclock = {}
+  for (let i in keys) {
+    let key = keys[i]
+    maxclock[key] = Math.max(c1[key] || 0, c2[key] || 0)
+  }
+  console.log("C1",c1)
+  console.log("C2",c2)
+  console.log("max",maxclock)
+  return maxclock
+}
 
 export default class aMPLNet extends EventEmitter {
   constructor() {
     super()
 
-    this.token  = config.slackBotToken || process.env.SLACK_BOT_TOKEN
+    this.token  = process.env.SLACK_BOT_TOKEN
     this.name   = process.env.NAME
     this.peergroup = peergroup
     this.connected = false
@@ -29,13 +44,35 @@ export default class aMPLNet extends EventEmitter {
 
     this.connected = true
 
-    if (this.token && this.doc_id) {
-      let bot = ss.init({doc_id: this.doc_id, name: this.name, bot_token: this.token, session: this.peer_id })
+    this.store.on('change', (action,state) => {
+      let clock = Tesseract.getVClock(state)
+      this.clocks[this.SELF.id] = clock
+      if (action == "APPLY_DELTAS") {
+        window.PEERS.forEach((peer) => {
+          peer.send({vectorClock: clock })
+          this.peers[peer.id].messagesSent += 1
+        })
+      } else {
+        window.PEERS.forEach((peer) => {
+          this.updatePeer(peer, state, this.clocks[peer.id])
+        })
+      }
+      this.emit('peer')
+    })
+
+    if (this.doc_id) {
+      let bot;
+      if (process.env.SLACK_BOT_TOKEN) {
+        bot = ss.init({doc_id: this.doc_id, name: this.name, bot_token: this.token, session: this.peer_id })
+      }
+      else {
+        bot = bs.init({doc_id: this.doc_id, name: this.name, session: this.peer_id })
+      }
 
       peergroup.on('peer', (peer) => {
         window.PEERS.push(peer)
         this.seqs[peer.id] = 0
-        if (peer.self == true) { this.SELF = peer }
+        if (peer.self == true) { this.SELF = peer } 
         console.log("NEW PEER:", peer.id, peer.name)
         this.peers[peer.id] = {
           connected: false,
@@ -50,6 +87,12 @@ export default class aMPLNet extends EventEmitter {
           window.PEERS.splice(window.PEERS.indexOf(peer))
           console.log("PEER: disconnected",peer.id)
           this.peers[peer.id].connected = false
+          this.emit('peer')
+        })
+
+        peer.on('closed', () => {
+          console.log("PEER: closed",peer.id)
+          delete this.peers[peer.id]
           this.emit('peer')
         })
 
@@ -73,10 +116,9 @@ export default class aMPLNet extends EventEmitter {
               type: "APPLY_DELTAS",
               deltas: m.deltas
             })
-
           }
 
-          if (m.vectorClock && m.seq == this.seqs[peer.id]) { // ignore acks for all but the last send
+          if (m.vectorClock && (m.deltas || m.seq == this.seqs[peer.id])) { // ignore acks for all but the last send
             console.log("GOT VECTOR CLOCK",m.vectorClock)
             this.updatePeer(peer,this.store.getState(), m.vectorClock)
           }
@@ -91,40 +133,22 @@ export default class aMPLNet extends EventEmitter {
     } else {
       console.log("Network disabled")
       console.log("TRELLIS_DOC_ID:", this.doc_id)
-      console.log("SLACK_BOT_TOKEN:", this.token)
+      //console.log("SLACK_BOT_TOKEN:", this.token)
     }
   }
-
-  broadcast(state, action) {
-    if (action == "APPLY_DELTAS") {
-      let clock = Tesseract.getVClock(state)
-      window.PEERS.forEach((peer) => {
-        peer.send({vectorClock: clock, docId: this.doc_id})
-        this.peers[peer.id].messagesSent += 1
-        this.emit('peer')
-      })
-    } else {
-      window.PEERS.forEach((peer) => {
-        this.updatePeer(peer, state, this.clocks[peer.id])
-      })
-    }
-  }
-
 
   updatePeer(peer, state, clock) {
     if (peer == undefined) return
     if (clock == undefined) return
     console.log("Checking to send deltas vs clock",clock)
     let myClock = Tesseract.getVClock(state)
-    this.clocks[peer.id] = myClock
-    this.clocks[this.SELF.id] = myClock
+    this.clocks[peer.id] = clockMax(myClock,clock)
     this.seqs[peer.id] += 1
     let deltas = Tesseract.getDeltasAfter(state, clock)
     if (deltas.length > 0) {
       console.log("SENDING DELTAS:", deltas.length)
-      peer.send({deltas: deltas, seq: this.seqs[peer.id]})
+      peer.send({deltas: deltas, seq: this.seqs[peer.id], vectorClock: myClock})
       this.peers[peer.id].messagesSent += 1
-      this.emit('peer')
     }
   }
 
@@ -136,8 +160,10 @@ export default class aMPLNet extends EventEmitter {
   disconnect() {
     if (this.connected == false) throw "network already disconnected - connect first"
     console.log("NETWORK DISCONNECT")
+    this.store.removeAllListeners('change')
     delete this.store
     peergroup.close()
     this.connected = false
+    this.emit('peer')
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "aMPL",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "main": "lib/ampl",
   "author": "",
   "license": "ISC",
@@ -18,7 +18,7 @@
     "debug": "2.6.8",
     "dotenv": "4.0.0",
     "lz4": "0.5.3",
-    "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git"
+    "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git#dbb19f04851b7aaa2aaa3fc07999d25c73082b3c"
   },
   "devDependencies": {
     "babel-cli": "6.24.1",

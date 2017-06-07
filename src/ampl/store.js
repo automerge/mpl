@@ -21,26 +21,26 @@ export default class Store {
 
   dispatch(action) {
     let state = this.state
-    let newState
+    let changesets 
 
     switch(action.type) {
       case "NEW_DOCUMENT":
-        newState = this.newDocument(state, action)
+        changeset = this.newDocument(state, action)
         break;
       case "OPEN_DOCUMENT":
-        newState = this.openDocument(state, action)
+        changeset = this.openDocument(state, action)
         break;
       case "MERGE_DOCUMENT":
-        newState = this.mergeDocument(state, action)
+        changeset = this.mergeDocument(state, action)
         break;
       case "APPLY_DELTAS":
-        newState = this.applyDeltas(state, action)
+        changeset = action.deltas 
         break;
       default:
-        newState = this.reducer(state, action)
+        changeset = Tesseract.changeset(state, (doc) => { this.reducer(doc, action) })
     }
 
-    this.state = newState
+    this.state = Tesseract.applyChangeset(this.state, newState)
 
     if(action.type === "NEW_DOCUMENT" || action.type === "OPEN_DOCUMENT") {
       if(this.network) this.network.disconnect()
@@ -56,7 +56,7 @@ export default class Store {
     }
 
     this.network.broadcast(newState, action.type)
-    this.listeners.forEach((listener) => listener())
+    this.listeners.forEach((listener) => listener(changeset))
   }
 
   subscribe(listener) {

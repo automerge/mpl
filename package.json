@@ -21,7 +21,7 @@
     "dotenv": "4.0.0",
     "express": "4.15.3",
     "lz4": "0.5.3",
-    "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git#dbb19f04851b7aaa2aaa3fc07999d25c73082b3c"
+    "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git#v0.2.0"
   },
   "devDependencies": {
     "babel-cli": "6.24.1",

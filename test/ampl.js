@@ -8,7 +8,9 @@ function createStore() {
   let store = new aMPL.Store((state, action) => {
     switch(action.type) {
       case "INCREMENT":
-        return aMPL.Tesseract.set(state, "counter", (state.counter || 0) + 1)
+        return aMPL.Tesseract.changeset(state, (doc) => {
+          doc.counter = (state.counter || 0) + 1
+        })
       default:
         return state
     }
@@ -34,7 +36,9 @@ describe("Store", function() {
   it("allows you to overwrite default reducer actions", function() {
     let store = new aMPL.Store()
     store.newDocument = (state, action) => {
-      return aMPL.Tesseract.set(state, "foo", "bar")
+      return aMPL.Tesseract.changeset(state, (doc) => {
+        doc.foo = "bar"
+      })
     }
 
     store.dispatch({ type: "NEW_DOCUMENT" })

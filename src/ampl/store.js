@@ -78,7 +78,9 @@ export default class Store {
       tesseract = Tesseract.load(action.file)
     else if(action.docId) {
       tesseract = Tesseract.init()
-      tesseract = Tesseract.set(tesseract, "docId", action.docId)
+      tesseract = Tesseract.changeset(tesseract, "open document", (doc) => {
+        doc.docId = action.docId
+      })
     }
 
     return tesseract
@@ -103,7 +105,9 @@ export default class Store {
 
   tesseractInit() {
     let tesseract = new Tesseract.init()
-    tesseract = Tesseract.set(tesseract, "docId", uuid())
+    tesseract = Tesseract.changeset(tesseract, "new document", (doc) => {
+      doc.docId = uuid() 
+    })
 
     return tesseract
   }

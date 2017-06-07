@@ -40,7 +40,9 @@ export default class App extends React.Component {
     this.store = new aMPL.Store((state, action) => {
       switch(action.type) {
         case "INCREMENT_COUNTER":
-          return aMPL.Tesseract.set(state, "counter", (state.counter || 0) + 1)
+          return aMPL.Tesseract.changeset(state, "increment counter", (doc) => {
+            doc.counter = (state.counter || 0) + 1
+          })
         default:
           return state
       }

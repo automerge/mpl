@@ -4,7 +4,7 @@ import bs from './amplnet/bonjour-signaler'
 import peergroup from './amplnet/peergroup'
 import Tesseract from 'tesseract'
 import EventEmitter from 'events'
-
+import config from './config'
 
 function clockMax(c1,c2) {
   let keys = Object.keys(c1).concat(Object.keys(c2))
@@ -23,7 +23,7 @@ export default class aMPLNet extends EventEmitter {
   constructor() {
     super()
 
-    this.token  = process.env.SLACK_BOT_TOKEN
+    this.token  = config.slackBotToken || process.env.SLACK_BOT_TOKEN
     this.name   = process.env.NAME
     this.peergroup = peergroup
     this.connected = false

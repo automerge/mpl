@@ -2,12 +2,9 @@ import Tesseract from 'tesseract'
 import fs from 'fs'
 import uuid from './uuid'
 import aMPLNet from './amplnet'
-import EventEmitter from 'events'
 
-export default class Store extends EventEmitter {
+export default class Store {
   constructor(reducer) {
-    super()
-    
     this.reducer   = reducer
     this.state     = this.tesseractInit()
     this.listeners = []
@@ -58,9 +55,7 @@ export default class Store extends EventEmitter {
       this.network = network
     }
 
-//    this.network.broadcast(newState, action.type)
-    this.emit('change', action.type, newState)
-
+    this.network.broadcast(newState, action.type)
     this.listeners.forEach((listener) => listener())
   }
 

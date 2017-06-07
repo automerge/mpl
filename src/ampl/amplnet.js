@@ -44,22 +44,6 @@ export default class aMPLNet extends EventEmitter {
 
     this.connected = true
 
-    this.store.on('change', (action,state) => {
-      let clock = Tesseract.getVClock(state)
-      this.clocks[this.SELF.id] = clock
-      if (action == "APPLY_DELTAS") {
-        window.PEERS.forEach((peer) => {
-          peer.send({vectorClock: clock })
-          this.peers[peer.id].messagesSent += 1
-        })
-      } else {
-        window.PEERS.forEach((peer) => {
-          this.updatePeer(peer, state, this.clocks[peer.id])
-        })
-      }
-      this.emit('peer')
-    })
-
     if (this.doc_id) {
       let bot;
       if (process.env.SLACK_BOT_TOKEN) {
@@ -137,6 +121,22 @@ export default class aMPLNet extends EventEmitter {
     }
   }
 
+  broadcast(state, action) {
+    let clock = Tesseract.getVClock(state)
+    this.clocks[this.SELF.id] = clock
+    if (action == "APPLY_DELTAS") {
+      window.PEERS.forEach((peer) => {
+        peer.send({vectorClock: clock })
+        this.peers[peer.id].messagesSent += 1
+      })
+    } else {
+      window.PEERS.forEach((peer) => {
+        this.updatePeer(peer, state, this.clocks[peer.id])
+      })
+    }
+    this.emit('peer')
+  }
+
   updatePeer(peer, state, clock) {
     if (peer == undefined) return
     if (clock == undefined) return
@@ -160,7 +160,6 @@ export default class aMPLNet extends EventEmitter {
   disconnect() {
     if (this.connected == false) throw "network already disconnected - connect first"
     console.log("NETWORK DISCONNECT")
-    this.store.removeAllListeners('change')
     delete this.store
     peergroup.close()
     this.connected = false

@@ -94,8 +94,6 @@ function init(config) {
           if (msg.action == "reply" && msg.to == SESSION) {
             HANDLERS['reply'](msg, msg.body)
           }
-        } else {
-          console.log("Message about a document other than the one we're managing - ignore")
         }
       } else {
         console.log("Message was by me...")

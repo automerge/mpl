@@ -6,16 +6,6 @@ import Tesseract from 'tesseract'
 import EventEmitter from 'events'
 import config from './config'
 
-function clockMax(c1,c2) {
-  let keys = Object.keys(c1).concat(Object.keys(c2))
-  let maxclock = {}
-  for (let i in keys) {
-    let key = keys[i]
-    maxclock[key] = Math.max(c1[key] || 0, c2[key] || 0)
-  }
-  return maxclock
-}
-
 export default class aMPLNet extends EventEmitter {
   constructor(options) {
     super()
@@ -117,6 +107,19 @@ export default class aMPLNet extends EventEmitter {
     }
   }
 
+  clockMax(clock1, clock2) {
+    let maxclock  = {}
+    let keys      = Object.keys(clock1).concat(Object.keys(clock2))
+
+    for (let i in keys) {
+      let key = keys[i]
+      maxclock[key] = Math.max(clock1[key] || 0, clock2[key] || 0)
+    }
+
+    return maxclock
+  }
+
+
   broadcast(state, action) {
     let clock = Tesseract.getVClock(state)
     this.clocks[this.SELF.id] = clock
@@ -137,7 +140,7 @@ export default class aMPLNet extends EventEmitter {
     if (peer == undefined) return
     if (clock == undefined) return
     let myClock = Tesseract.getVClock(state)
-    this.clocks[peer.id] = clockMax(myClock,clock)
+    this.clocks[peer.id] = this.clockMax(myClock,clock)
     this.seqs[peer.id] += 1
     let deltas = Tesseract.getDeltasAfter(state, clock)
     if (deltas.length > 0) {
@@ -146,11 +149,6 @@ export default class aMPLNet extends EventEmitter {
     }
   }
 
-  // FIXME
-  //    - close peerGroup connection so we stop receiving messages
-  //    - stop any subscriptions to the store
-  //    - stop any modifications/dispatches to the store
-  //    - reset this.PEERS ... and this.peers? why do we have both still?
   disconnect() {
     if (this.connected == false) throw "network already disconnected - connect first"
     console.log("NETWORK DISCONNECT")

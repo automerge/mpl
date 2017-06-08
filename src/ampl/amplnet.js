@@ -21,7 +21,7 @@ export default class aMPLNet extends EventEmitter {
     super()
 
     this.token  = config.slackBotToken || process.env.SLACK_BOT_TOKEN
-    this.name   = process.env.NAME
+    this.name   = config.name || process.env.NAME
     this.peergroup = peergroup
     this.connected = false
 

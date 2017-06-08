@@ -1,6 +1,8 @@
 import assert from 'assert'
 import aMPL from '../src/ampl'
 import dotenv from 'dotenv'
+import wrtc from 'wrtc'
+import childProcess from 'child_process'
 
 dotenv.config()
 
@@ -14,7 +16,7 @@ function createStore() {
       default:
         return state
     }
-  })
+  }, { network: { wrtc: wrtc }})
 
   return store
 }
@@ -59,18 +61,23 @@ describe("Config", function() {
 
 describe("Network", function() {
   it.skip("synchronizes between two clients", function(done) {
-    this.timeout(15000)
+    this.timeout(30000)
 
-    let storeA = createStore()
-    let storeB = createStore()
-    let stores = [storeA, storeB]
+    childProcess.execFile("node", ["./bot.js"], (error, stdout, stderr) => {
+      console.log("error: ", error)
+      console.log("Stdout", stdout)
+      console.log("stderr", stderr)
+    })
 
-    stores.forEach((store) => store.dispatch({type: "OPEN_DOCUMENT", docId: 1}))
-    storeA.dispatch({ type: "INCREMENT" })
+    let store = createStore()
 
-    setInterval(() => {
-      assert.equal(1, storeB.getState().counter)
+    aMPL.config.name = "Test Store"
+    store.dispatch({type: "OPEN_DOCUMENT", docId: "botcounter-abcd"})
+
+    setTimeout(() => {
+      let counter = store.getState().counter
+      assert(counter && counter > 0)
       done()
-    }, 10000)
+    }, 5000)
   })
 })

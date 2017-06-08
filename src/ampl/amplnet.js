@@ -1,7 +1,7 @@
 import ss from './amplnet/slack-signaler'
 import bs from './amplnet/bonjour-signaler'
 
-import peergroup from './amplnet/peergroup'
+import PeerGroup from './amplnet/peergroup'
 import Tesseract from 'tesseract'
 import EventEmitter from 'events'
 import config from './config'
@@ -12,13 +12,13 @@ export default class aMPLNet extends EventEmitter {
 
     this.token  = config.slackBotToken || process.env.SLACK_BOT_TOKEN
     this.name   = config.name || process.env.NAME
-    this.peergroup = peergroup
+    this.peergroup = new PeerGroup()
     this.connected = false
 
     if (options) {
       if (options.wrtc) {
-        peergroup.setWRTC(options.wrtc);
-      } 
+        this.peergroup.setWRTC(options.wrtc);
+      }
     }
 
   }
@@ -46,10 +46,10 @@ export default class aMPLNet extends EventEmitter {
         bot = bs.init({doc_id: this.doc_id, name: this.name, session: this.peer_id })
       }
 
-      peergroup.on('peer', (peer) => {
+      this.peergroup.on('peer', (peer) => {
         this.PEERS.push(peer)
         this.seqs[peer.id] = 0
-        if (peer.self == true) { this.SELF = peer } 
+        if (peer.self == true) { this.SELF = peer }
         this.peers[peer.id] = {
           connected: false,
           name: peer.name,
@@ -100,7 +100,7 @@ export default class aMPLNet extends EventEmitter {
 
       })
 
-      peergroup.join(bot)
+      this.peergroup.join(bot)
     } else {
       console.log("Network disabled")
       console.log("TRELLIS_DOC_ID:", this.doc_id)
@@ -153,7 +153,7 @@ export default class aMPLNet extends EventEmitter {
     if (this.connected == false) throw "network already disconnected - connect first"
     console.log("NETWORK DISCONNECT")
     delete this.store
-    peergroup.close()
+    this.peergroup.close()
     this.connected = false
     this.emit('peer')
   }

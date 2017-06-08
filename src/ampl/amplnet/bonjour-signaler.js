@@ -46,11 +46,11 @@ function init(config) {
         console.log(service)
         let meta = service.txt
         if (meta.session == SESSION) {
-          console.log("The service we found was our own all along...")
+          console.log("Detected our own session.")
           return
         }
         if (meta.docid != DOC_ID) {
-          console.log("Heard folks talking about "+meta.docId+" but we only want to talk about " + DOC_ID+".")
+          console.log("Overheard: "+meta.docid+" (listening for: " + DOC_ID+")")
           return
         }
         hearHello(service)
@@ -60,7 +60,9 @@ function init(config) {
     // bonjour downcases keynames.
     let text = {session:SESSION, name: NAME, docid: DOC_ID}
     console.log("text is :", text)
-    bonjour.publish({ name: 'ampl-'+SESSION, type: 'ampl', port: PORT, txt: text })
+    setTimeout( () => {
+      bonjour.publish({ name: 'ampl-'+SESSION, type: 'ampl', port: PORT, txt: text })
+    }, 2000)
   }
 
   // initiated by .start()

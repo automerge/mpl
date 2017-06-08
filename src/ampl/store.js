@@ -4,12 +4,14 @@ import uuid from './uuid'
 import aMPLNet from './amplnet'
 
 export default class Store {
-  constructor(reducer) {
+  constructor(reducer, options) {
     this.reducer   = reducer
     this.state     = this.tesseractInit()
     this.listeners = []
 
-    let network = new aMPLNet()
+    this.options = options || {network: {}}
+
+    let network = new aMPLNet(options.network)
     network.connect({
       peerId: this.state._state.get("_id"),
       docId: this.state.docId,

@@ -41,9 +41,16 @@ function Peer(id, name, send_signal) {
   this.send    = (message) => {
     if (this.self) return; // dont send messages to ourselves
     if (!("data_channel" in this)) return; // dont send messages to disconnected peers
+    console.log("---------------")
+    console.log("---------------")
+    console.log("SENDING MESSAGE")
+    console.log("---------------")
+    console.log("---------------")
+    console.log(JSON.stringify(message))
+    
     var buffer = new Buffer(JSON.stringify(message), 'utf8')
     var compressed = lz4.encode(buffer);
-    this.data_channel.send(compressed)
+    this.data_channel.send(compressed.toString('base64'))
   }
 
   Peers[this.id] = this
@@ -56,7 +63,7 @@ function Peer(id, name, send_signal) {
 }
 
 function initialize_peerconnection(peer) {
-  var webrtc = new RTCPeerConnection(WebRTCConfig)
+  var webrtc = new wrtc.RTCPeerConnection(WebRTCConfig)
 
   webrtc.onicecandidate = function(event) {
     if (event.candidate) {
@@ -147,11 +154,11 @@ function processSignal(msg, signal, handler) {
     });
   }
   if (signal.sdp) {
-    peer.webrtc.setRemoteDescription(new RTCSessionDescription(signal), callback, function(e) {
+    peer.webrtc.setRemoteDescription(new wrtc.RTCSessionDescription(signal), callback, function(e) {
       console.log("Error setRemoteDescription",e)
     })
   } else if (signal.candidate) {
-    peer.webrtc.addIceCandidate(new RTCIceCandidate(signal));
+    peer.webrtc.addIceCandidate(new wrtc.RTCIceCandidate(signal));
   }
 }
 
@@ -192,12 +199,15 @@ function join(signaler) {
 }
 
 function process_message(peer, msg) {
-  //console.log(msg)
-  //console.log("wire size",msg.data.length)
-  var decompressed = lz4.decode(new Buffer(msg.data));
+  console.log("---------------")
+  console.log("---------------")
+  console.log("RECEIVING MESSAGE")
+  console.log("---------------")
+  console.log("---------------")
+  var decompressed = lz4.decode(Buffer.from(msg.data, 'base64'));
   var data = decompressed.toString('utf8');
-  //console.log("message size",data.length)
-  //console.log("INCOMING MSG",msg)
+  console.log("message size",data.length)
+  console.log("INCOMING MSG",msg)
 
   let message = JSON.parse(data)
   peer.dispatch('message',message)
@@ -215,7 +225,31 @@ function onHandler(type, handler) {
   }
 }
 
+let wrtc;
+// we're in electron/browser
+if (typeof window != 'undefined') {
+  wrtc = {
+    RTCPeerConnection: RTCPeerConnection,
+    RTCIceCandidate: RTCIceCandidate,
+    RTCSessionDescription: RTCSessionDescription
+  }
+}
+// byowebrtc
+else {
+  wrtc = {
+    RTCPeerConnection: undefined,
+    RTCIceCandidate: undefined,
+    RTCSessionDescription: undefined
+  }
+}
+
+function setWRTC(inWrtc) {
+  console.log("SETTING WRTC")
+  wrtc = inWrtc
+}
+
 module.exports = {
+  setWRTC:   setWRTC,
   join:      join,
   close:     close,
   on:        onHandler

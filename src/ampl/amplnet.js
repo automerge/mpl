@@ -20,13 +20,22 @@ function clockMax(c1,c2) {
 }
 
 export default class aMPLNet extends EventEmitter {
-  constructor() {
+  constructor(options) {
     super()
 
     this.token  = config.slackBotToken || process.env.SLACK_BOT_TOKEN
     this.name   = process.env.NAME
     this.peergroup = peergroup
     this.connected = false
+
+    if (options) {
+      console.log("Options provided.")
+      if (options.wrtc) {
+        console.log("WRTC provided.")
+        peergroup.setWRTC(options.wrtc);
+      } 
+    }
+
   }
 
   connect(config) {
@@ -36,7 +45,7 @@ export default class aMPLNet extends EventEmitter {
     this.peers  = {}
     this.clocks = {}
     this.seqs = {}
-    window.PEERS = []
+    this.PEERS = []
 
     this.peer_id = this.config.peerId
     this.doc_id = this.config.docId
@@ -54,7 +63,7 @@ export default class aMPLNet extends EventEmitter {
       }
 
       peergroup.on('peer', (peer) => {
-        window.PEERS.push(peer)
+        this.PEERS.push(peer)
         this.seqs[peer.id] = 0
         if (peer.self == true) { this.SELF = peer } 
         console.log("NEW PEER:", peer.id, peer.name)
@@ -68,7 +77,7 @@ export default class aMPLNet extends EventEmitter {
         this.emit('peer')
 
         peer.on('disconnect', () => {
-          window.PEERS.splice(window.PEERS.indexOf(peer))
+          this.PEERS.splice(this.PEERS.indexOf(peer))
           console.log("PEER: disconnected",peer.id)
           this.peers[peer.id].connected = false
           this.emit('peer')
@@ -125,12 +134,12 @@ export default class aMPLNet extends EventEmitter {
     let clock = Tesseract.getVClock(state)
     this.clocks[this.SELF.id] = clock
     if (action == "APPLY_DELTAS") {
-      window.PEERS.forEach((peer) => {
+      this.PEERS.forEach((peer) => {
         peer.send({vectorClock: clock })
         this.peers[peer.id].messagesSent += 1
       })
     } else {
-      window.PEERS.forEach((peer) => {
+      this.PEERS.forEach((peer) => {
         this.updatePeer(peer, state, this.clocks[peer.id])
       })
     }
@@ -156,7 +165,7 @@ export default class aMPLNet extends EventEmitter {
   //    - close peerGroup connection so we stop receiving messages
   //    - stop any subscriptions to the store
   //    - stop any modifications/dispatches to the store
-  //    - reset window.PEERS
+  //    - reset this.PEERS ... and this.peers? why do we have both still?
   disconnect() {
     if (this.connected == false) throw "network already disconnected - connect first"
     console.log("NETWORK DISCONNECT")

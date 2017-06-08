@@ -11,7 +11,7 @@ export default class Store {
 
     this.options = options || {network: {}}
 
-    let network = new aMPLNet(options.network)
+    let network = new aMPLNet(this.options.network)
     network.connect({
       peerId: this.state._state.get("_id"),
       docId: this.state.docId,

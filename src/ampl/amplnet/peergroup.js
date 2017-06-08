@@ -1,3 +1,5 @@
+import Peer from './peer'
+
 var Peers = {}
 var Handshakes = {}
 var WebRTCConfig = {
@@ -13,48 +15,6 @@ var WebRTCConfig = {
 var lz4 = require('lz4')
 
 var notice = (peer,desc) => (event) => console.log("notice:" + peer.id + ": " + desc, event)
-
-function Peer(id, name, send_signal) {
-  this.id             = id
-  this.name           = name
-  this.handlers       = { connect: [], closed:[], disconnect: [], message: [] }
-  this.self           = (send_signal == undefined)
-
-  this.on = (type,handler) => {
-    this.handlers[type].push(handler)
-  }
-
-  this.dispatch = (type,arg) => {
-    this.handlers[type].forEach((h) => h(arg))
-  }
-
-  this.send_signal      = send_signal
-
-  this.close    = () => {
-    try {
-      this.webrtc.close()
-    } catch (err) {
-      // nope
-    }
-  }
-
-  this.send    = (message) => {
-    if (this.self) return; // dont send messages to ourselves
-    if (!("data_channel" in this)) return; // dont send messages to disconnected peers
-    
-    var buffer = new Buffer(JSON.stringify(message), 'utf8')
-    var compressed = lz4.encode(buffer);
-    this.data_channel.send(compressed.toString('base64'))
-  }
-
-  Peers[this.id] = this
-
-  if (!this.self) {
-    initialize_peerconnection(this)
-  }
-
-  dispatch("peer", this)
-}
 
 function initialize_peerconnection(peer) {
   var webrtc = new wrtc.RTCPeerConnection(WebRTCConfig)
@@ -95,7 +55,10 @@ function initialize_peerconnection(peer) {
 
 function beginHandshake(id, name, handler) {
   delete Handshakes[id]
-  let peer = new Peer(id,name,handler)
+  let peer = new Peer(id, name, handler)
+  Peers[peer.id] = peer
+  if(!peer.self) initialize_peerconnection(peer)
+  dispatch("peer", peer)
 
   let data = peer.webrtc.createDataChannel("datachannel",{protocol: "tcp"});
   data.onmessage = msg => process_message(peer, msg)
@@ -130,7 +93,15 @@ function processSignal(msg, signal, handler) {
     return;
   }
   
-  let peer = Peers[id] || (new Peer(id, name, handler))
+  let peer
+  if(Peers[id])
+    peer = Peers[id]
+  else {
+    peer = new Peer(id, name, handler)
+    Peers[id] = peer
+    if(!peer.self) initialize_peerconnection(peer)
+    dispatch("peer", peer)
+  }
   
   if (signal.type == "offer") callback = function() {
     peer.webrtc.createAnswer(function(answer) {
@@ -176,7 +147,12 @@ function join(signaler) {
     console.log("ERROR-MESSAGE",message)
     console.log("ERROR",e)
   })
-  let me = new Peer(signaler.session,signaler.name)
+
+  let me = new Peer(signaler.session, signaler.name)
+  Peers[me.id] = me
+  if(!me.self) initialize_peerconnection(me)
+  dispatch("peer", me)
+
   signaler.on('connect', () => {
     me.dispatch('connect')
   })

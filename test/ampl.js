@@ -56,14 +56,16 @@ describe("Config", function() {
     let store =  new aMPL.Store()
 
     assert.equal(aMPL.config.slackBotToken, store.network.token)
+
+    aMPL.config.slackBotToken = undefined
   })
 })
 
 describe("Network", function() {
-  it.skip("synchronizes between two clients", function(done) {
+  it("synchronizes between two clients", function(done) {
     this.timeout(30000)
 
-    childProcess.execFile("node", ["./bot.js"], (error, stdout, stderr) => {
+    childProcess.execFile("node", ["test/bot.js"], (error, stdout, stderr) => {
       console.log("error: ", error)
       console.log("Stdout", stdout)
       console.log("stderr", stderr)

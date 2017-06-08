@@ -1,4 +1,6 @@
-let ampl = require('./lib/ampl')
+require("babel-register")
+
+let ampl = require('../src/ampl')
 let wrtc = require('wrtc')
 
 require("dotenv").config()

@@ -31,7 +31,6 @@ function init(config) {
   let last_ts
   let onConnectHandler = () => {}
   let CONNECT_DISPATCH = (h) => {
-    console.log("GET SLACK CONNECT HANDLER")
     onConnectHandler = h
   }
   let opts = { retryConfig: { forever: true, maxTimeout: 30 * 1000 }};
@@ -41,7 +40,6 @@ function init(config) {
 
   // The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload
   rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
-    console.log("CALL SLACK CONNECT HANDLER")
     onConnectHandler()
     HANDLERS['connect']()
     for (const c of rtmStartData.channels) {
@@ -77,7 +75,6 @@ function init(config) {
   rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(message) {
     let ts = parseFloat(message.ts)
     if (last_ts && last_ts > ts) console.log("WARNING - TS OUT OF ORDER")
-    console.log('Message:', message);
     try {
       let msg = JSON.parse(message.text)
       if (msg.session != SESSION) {
@@ -108,7 +105,6 @@ function init(config) {
       HANDLERS['error'](message,e)
     }
     last_ts = ts
-    console.log("Done processing message")
   });
   return { 
     session: SESSION,

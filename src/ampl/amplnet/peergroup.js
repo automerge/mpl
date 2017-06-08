@@ -41,12 +41,6 @@ function Peer(id, name, send_signal) {
   this.send    = (message) => {
     if (this.self) return; // dont send messages to ourselves
     if (!("data_channel" in this)) return; // dont send messages to disconnected peers
-    console.log("---------------")
-    console.log("---------------")
-    console.log("SENDING MESSAGE")
-    console.log("---------------")
-    console.log("---------------")
-    console.log(JSON.stringify(message))
     
     var buffer = new Buffer(JSON.stringify(message), 'utf8')
     var compressed = lz4.encode(buffer);
@@ -72,7 +66,6 @@ function initialize_peerconnection(peer) {
   }
 
   webrtc.oniceconnectionstatechange = function(event) {
-    console.log("notice:statechange",peer.id,webrtc.iceConnectionState, event)
     if (webrtc.iceConnectionState == "disconnected") {
       peer.dispatch('disconnect')
     }
@@ -90,7 +83,6 @@ function initialize_peerconnection(peer) {
   webrtc.onaddstream    = notice(peer,"onaddstream")
   webrtc.onremovestream = notice(peer,"onremovestream")
   webrtc.ondatachannel  = function(event) {
-    console.log("DATA CHANNEL!")
     peer.data_channel = event.channel
     peer.data_channel.onmessage = msg => process_message(peer, msg)
     peer.data_channel.onerror = e => notice(peer,"datachannel error",e)
@@ -105,13 +97,11 @@ function beginHandshake(id, name, handler) {
   delete Handshakes[id]
   let peer = new Peer(id,name,handler)
 
-  console.log("DATA CHANNEL START")
   let data = peer.webrtc.createDataChannel("datachannel",{protocol: "tcp"});
   data.onmessage = msg => process_message(peer, msg)
   data.onclose   = notice(peer,"data:onclose")
   data.onerror   = notice(peer,"data:error")
   data.onopen    = (event) => {
-    console.log("DATA CHANNEL OPEN!")
     peer.data_channel = data
     peer.dispatch('connect')
   }
@@ -166,12 +156,10 @@ let Signaler = undefined
 let HANDLERS = { peer: [] }
 
 function close() {
-  console.log("STOP SIGNALER")
   if (Signaler) {
     Signaler.stop()
     Signaler = undefined
     for (let id in Peers) {
-      console.log("CLOSE PEER",id)
       Peers[id].close()
     }
     Handshakes = {}
@@ -199,16 +187,9 @@ function join(signaler) {
 }
 
 function process_message(peer, msg) {
-  console.log("---------------")
-  console.log("---------------")
-  console.log("RECEIVING MESSAGE")
-  console.log("---------------")
-  console.log("---------------")
   var decompressed = lz4.decode(Buffer.from(msg.data, 'base64'));
   var data = decompressed.toString('utf8');
-  console.log("message size",data.length)
-  console.log("INCOMING MSG",msg)
-
+  
   let message = JSON.parse(data)
   peer.dispatch('message',message)
 }
@@ -244,7 +225,6 @@ else {
 }
 
 function setWRTC(inWrtc) {
-  console.log("SETTING WRTC")
   wrtc = inWrtc
 }
 

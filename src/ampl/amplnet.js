@@ -13,9 +13,6 @@ function clockMax(c1,c2) {
     let key = keys[i]
     maxclock[key] = Math.max(c1[key] || 0, c2[key] || 0)
   }
-  console.log("C1",c1)
-  console.log("C2",c2)
-  console.log("max",maxclock)
   return maxclock
 }
 
@@ -29,9 +26,7 @@ export default class aMPLNet extends EventEmitter {
     this.connected = false
 
     if (options) {
-      console.log("Options provided.")
       if (options.wrtc) {
-        console.log("WRTC provided.")
         peergroup.setWRTC(options.wrtc);
       } 
     }
@@ -40,7 +35,6 @@ export default class aMPLNet extends EventEmitter {
 
   connect(config) {
     if (this.connected) throw "network already connected - disconnect first"
-    console.log("NETWORK CONNECT",config)
     this.config = config || this.config
     this.peers  = {}
     this.clocks = {}
@@ -66,7 +60,6 @@ export default class aMPLNet extends EventEmitter {
         this.PEERS.push(peer)
         this.seqs[peer.id] = 0
         if (peer.self == true) { this.SELF = peer } 
-        console.log("NEW PEER:", peer.id, peer.name)
         this.peers[peer.id] = {
           connected: false,
           name: peer.name,
@@ -78,13 +71,11 @@ export default class aMPLNet extends EventEmitter {
 
         peer.on('disconnect', () => {
           this.PEERS.splice(this.PEERS.indexOf(peer))
-          console.log("PEER: disconnected",peer.id)
           this.peers[peer.id].connected = false
           this.emit('peer')
         })
 
         peer.on('closed', () => {
-          console.log("PEER: closed",peer.id)
           delete this.peers[peer.id]
           this.emit('peer')
         })
@@ -103,8 +94,6 @@ export default class aMPLNet extends EventEmitter {
           let store = this.store
 
           if (m.deltas && m.deltas.length > 0) {
-            console.log("GOT DELTAS",m.deltas)
-
             this.store.dispatch({
               type: "APPLY_DELTAS",
               deltas: m.deltas
@@ -112,7 +101,6 @@ export default class aMPLNet extends EventEmitter {
           }
 
           if (m.vectorClock && (m.deltas || m.seq == this.seqs[peer.id])) { // ignore acks for all but the last send
-            console.log("GOT VECTOR CLOCK",m.vectorClock)
             this.updatePeer(peer,this.store.getState(), m.vectorClock)
           }
           this.peers[peer.id].lastActivity = Date.now()
@@ -126,7 +114,6 @@ export default class aMPLNet extends EventEmitter {
     } else {
       console.log("Network disabled")
       console.log("TRELLIS_DOC_ID:", this.doc_id)
-      //console.log("SLACK_BOT_TOKEN:", this.token)
     }
   }
 
@@ -149,13 +136,11 @@ export default class aMPLNet extends EventEmitter {
   updatePeer(peer, state, clock) {
     if (peer == undefined) return
     if (clock == undefined) return
-    console.log("Checking to send deltas vs clock",clock)
     let myClock = Tesseract.getVClock(state)
     this.clocks[peer.id] = clockMax(myClock,clock)
     this.seqs[peer.id] += 1
     let deltas = Tesseract.getDeltasAfter(state, clock)
     if (deltas.length > 0) {
-      console.log("SENDING DELTAS:", deltas.length)
       peer.send({deltas: deltas, seq: this.seqs[peer.id], vectorClock: myClock})
       this.peers[peer.id].messagesSent += 1
     }

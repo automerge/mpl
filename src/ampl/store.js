@@ -1,6 +1,7 @@
 import Tesseract from 'tesseract'
 import fs from 'fs'
-import uuid from './uuid'
+import uuidv4 from 'uuid/v4'
+
 import aMPLNet from './amplnet'
 
 export default class Store {
@@ -108,7 +109,7 @@ export default class Store {
   tesseractInit() {
     let tesseract = new Tesseract.init()
     tesseract = Tesseract.changeset(tesseract, "new document", (doc) => {
-      doc.docId = uuid() 
+      doc.docId = uuidv4() 
     })
 
     return tesseract

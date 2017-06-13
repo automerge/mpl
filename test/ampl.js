@@ -28,6 +28,11 @@ describe("Store", function() {
     })
   })
 
+  it("has a UUID", function() {
+    let store = createStore()
+    assert(store.getState.docId, "no docID set: XXX @choxi what should we actually test here?")
+  })
+
   it("accepts a reducer", function() {
     let store = createStore()
     store.dispatch({ type: "INCREMENT" })

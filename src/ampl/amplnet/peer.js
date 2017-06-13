@@ -80,7 +80,7 @@ export default class Peer extends EventEmitter {
     webrtc.onremovestream = () => this.notice("onremovestream")
     webrtc.ondatachannel  = (event) => {
       this.data_channel = event.channel
-      this.data_channel.onmessage = (msg) => this.process_message(msg)
+      this.data_channel.onmessage = (msg) => this.processMessage(msg)
       this.data_channel.onerror = e => this.notice("datachannel error",e)
       this.data_channel.onclose = () => this.notice("datachannel closed")
       this.data_channel.onopen = () => this.notice("datachannel opened")
@@ -92,7 +92,7 @@ export default class Peer extends EventEmitter {
 
   establishDataChannel() {
     let data = this.webrtc.createDataChannel("datachannel",{protocol: "tcp"});
-    data.onmessage = (msg) => this.process_message(msg)
+    data.onmessage = (msg) => this.processMessage(msg)
     data.onclose   = () => this.notice("data:onclose")
     data.onerror   = () => this.notice("data:error")
     data.onopen    = (event) => {
@@ -130,8 +130,7 @@ export default class Peer extends EventEmitter {
     }
   }
 
-  // XX fixcaps
-  process_message(msg) {
+  processMessage(msg) {
     var decompressed = lz4.decode(Buffer.from(msg.data, 'base64'));
     var data = decompressed.toString('utf8');
 

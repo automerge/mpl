@@ -1,5 +1,6 @@
 import Peer from './peer'
 import lz4  from 'lz4'
+import EventEmitter from 'events'
 
 let wrtc
 
@@ -20,9 +21,10 @@ else {
   }
 }
 
-export default class PeerGroup {
+export default class PeerGroup extends EventEmitter {
   constructor() {
-    this.HANDLERS     = { peer: [] }
+    super()
+
     this.Signaler     = undefined
     this.Peers        = {}
     this.Handshakes   = {}
@@ -56,7 +58,7 @@ export default class PeerGroup {
     let me = new Peer(signaler.session, signaler.name)
     this.Peers[me.id] = me
     if(!me.self) this.initialize_peerconnection(me)
-    this.dispatch("peer", me)
+    this.emit("peer", me)
 
     signaler.on('connect', () => {
       me.emit('connect')
@@ -75,21 +77,8 @@ export default class PeerGroup {
         this.Peers[id].close()
       }
       this.Handshakes = {}
-
-      this.HANDLERS = { peer: [] }
+      this.removeAllListeners()
     }
-  }
-
-  on(type, handler) {
-    if (this.HANDLERS[type]) {
-      this.HANDLERS[type].push(handler)
-    }
-  }
-
-  dispatch() {
-    let args = Array.from(arguments)
-    let type = args.shift()
-    this.HANDLERS[type].forEach((handler) => handler(...args))
   }
 
   process_message(peer, msg) {
@@ -97,7 +86,7 @@ export default class PeerGroup {
     var data = decompressed.toString('utf8');
 
     let message = JSON.parse(data)
-    peer.dispatch('message',message)
+    peer.emit('message',message)
   }
 
   initialize_peerconnection(peer) {
@@ -111,11 +100,11 @@ export default class PeerGroup {
 
     webrtc.oniceconnectionstatechange = function(event) {
       if (webrtc.iceConnectionState == "disconnected") {
-        peer.dispatch('disconnect')
+        peer.emit('disconnect')
       }
       if (webrtc.iceConnectionState == "failed" || webrtc.iceConnectionState == "closed") {
         delete this.Peers[peer.id]
-        peer.dispatch('closed')
+        peer.emit('closed')
         if (this.Handshakes[peer.id]) {
           this.Handshakes[peer.id]()
         }
@@ -132,7 +121,7 @@ export default class PeerGroup {
       peer.data_channel.onerror = e => this.notice(peer,"datachannel error",e)
       peer.data_channel.onclose = () => this.notice(peer,"datachannel closed")
       peer.data_channel.onopen = () => this.notice(peer,"datachannel opened")
-      peer.dispatch('connect')
+      peer.emit('connect')
     }
 
     peer.webrtc = webrtc
@@ -143,7 +132,7 @@ export default class PeerGroup {
     let peer = new Peer(id, name, handler)
     this.Peers[peer.id] = peer
     if(!peer.self) this.initialize_peerconnection(peer)
-    this.dispatch("peer", peer)
+    this.emit("peer", peer)
 
     let data = peer.webrtc.createDataChannel("datachannel",{protocol: "tcp"});
     data.onmessage = msg => this.process_message(peer, msg)
@@ -151,7 +140,7 @@ export default class PeerGroup {
     data.onerror   = this.notice(peer,"data:error")
     data.onopen    = (event) => {
       peer.data_channel = data
-      peer.dispatch('connect')
+      peer.emit('connect')
     }
     peer.webrtc.createOffer(desc => {
       peer.webrtc.setLocalDescription(desc,
@@ -185,7 +174,7 @@ export default class PeerGroup {
       peer = new Peer(id, name, handler)
       this.Peers[id] = peer
       if(!peer.self) this.initialize_peerconnection(peer)
-      this.dispatch("peer", peer)
+      this.emit("peer", peer)
     }
 
     if (signal.type == "offer") callback = function() {

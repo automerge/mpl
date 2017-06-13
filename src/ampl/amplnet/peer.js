@@ -11,7 +11,6 @@ export default class Peer extends EventEmitter {
     this.self         = (send_signal == undefined)
     this.send_signal  = send_signal
 
-
     // we're in electron/browser
     if (typeof window != 'undefined') {
       this.wrtc = {
@@ -20,7 +19,7 @@ export default class Peer extends EventEmitter {
         RTCSessionDescription: RTCSessionDescription
       }
     }
-    // byowebrtc
+    // byowebrtc <- this is for node and could undoubtedly be better handled
     else if (options && options.wrtc) {
       this.wrtc = options.wrtc
     }
@@ -35,6 +34,9 @@ export default class Peer extends EventEmitter {
       ]
     }
 
+    // I'm not sure this should be here, but we call it literally
+    // every time we instantiate a Peer(), so let's leave it here for now
+    if(!me.self) peer.initializePeerConnection()
   }
 
   close() {

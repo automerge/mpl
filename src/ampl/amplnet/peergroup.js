@@ -21,21 +21,23 @@ export default class PeerGroup extends EventEmitter {
     signaler.on('offer', this.processSignal)
     signaler.on('reply', this.processSignal)
     signaler.on('error', (message,e) => {
-      console.log("ERROR-MESSAGE",message)
+      console.log("SIGNALER ERROR-MESSAGE",message)
       console.log("ERROR",e)
     })
 
-    let me = new Peer(this.options, signaler.session, signaler.name)
-    this.Peers[me.id] = me
-    if(!me.self) peer.initializePeerConnection()
-    this.emit("peer", me)
-
+    // add ourselves to the peers list with a do-nothing signaller
+    let me = getOrCreatePeer(signaler.session, signaler.name, undefined)
+    
+    // we define "connect" and "disconnect" for ourselves as whether
+    // we're connected to the signaller. 
     signaler.on('connect', () => {
       me.emit('connect')
     })
     signaler.on('disconnect', () => {
       me.emit('disconnect')
     })
+
+    // notify the signaller we're ready to connect.
     signaler.start()
   }
 
@@ -46,19 +48,27 @@ export default class PeerGroup extends EventEmitter {
       for (let id in this.Peers) {
         this.Peers[id].close()
       }
+      // throw away all cached handshakes
       this.Handshakes = {}
       this.removeAllListeners()
     }
   }
 
-  // xxx and this
-  beginHandshake(id, name, handler) {
-    delete this.Handshakes[id]
-    let peer = new Peer(this.options, id, name, handler)
-    this.Peers[peer.id] = peer
-    if(!peer.self) peer.initializePeerConnection()
-    this.emit("peer", peer)
+  getOrCreatePeer(id, name, handler) {
+    if(!this.Peers[id]) {
+      let peer = new Peer(this.options, id, name, handler)
+      this.Peers[id] = peer
+      this.emit("peer", peer)
+    }
+    return this.Peers[id]
+  }
 
+  beginHandshake(id, name, handler) {
+    delete this.Handshakes[id] // we're moving now, so discard this handshake
+
+    // this delete gives us the old semantics but i don't know why we do it
+    delete this.Peers[id] 
+    let peer = getOrCreatePeer(id, name, handler);
     peer.establishDataChannel();
   }
 
@@ -67,25 +77,16 @@ export default class PeerGroup extends EventEmitter {
     let name = msg.name
 
     if (msg.action == "hello") {
-      let begin = () => { this.beginHandshake(id,name,handler) }
-      if (id in this.Peers) {
-        this.Handshakes[id] = begin
+      if (id in this.Peers) { 
+        // we save a handshake for later if we already know them
+        this.Handshakes[id] = () => { this.beginHandshake(id,name,handler) }
       } else {
-        begin()
+        this.beginHandshake(id,name,handler)
       }
-      return;
     }
-
-    let peer
-    if(this.Peers[id])
-      peer = this.Peers[id]
-    else {
-      peer = new Peer(this.options, id, name, handler)
-      this.Peers[id] = peer
-      if(!peer.self) peer.initializePeerConnection()
-      this.emit("peer", peer)
+    else {      
+      let peer = getOrCreatePeer(id)
+      peer.handleSignal(signal)
     }
-
-    peer.handleSignal(signal)
   }
 }

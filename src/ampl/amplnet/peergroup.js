@@ -5,20 +5,6 @@ import EventEmitter from 'events'
 export default class PeerGroup extends EventEmitter {
   constructor(options) {
     super()
-
-    // XXX temporary.
-    // we're in electron/browser
-    if (typeof window != 'undefined') {
-      this.wrtc = {
-        RTCPeerConnection: RTCPeerConnection,
-        RTCIceCandidate: RTCIceCandidate,
-        RTCSessionDescription: RTCSessionDescription
-      }
-    }
-    // byowebrtc
-    else if (options && options.wrtc) {
-      this.wrtc = options.wrtc
-    }
     
     // XXX cleanup this
     this.options = options;
@@ -80,8 +66,6 @@ export default class PeerGroup extends EventEmitter {
     let id = msg.session
     let name = msg.name
 
-    var callback = function() { };
-
     if (msg.action == "hello") {
       let begin = () => { this.beginHandshake(id,name,handler) }
       if (id in this.Peers) {
@@ -102,24 +86,7 @@ export default class PeerGroup extends EventEmitter {
       this.emit("peer", peer)
     }
 
-    if (signal.type == "offer") callback = function() {
-      peer.webrtc.createAnswer(function(answer) {
-        peer.webrtc.setLocalDescription(answer,function() {
-          peer.send_signal(answer)
-        },function(e) {
-          console.log("Error setting setLocalDescription",e)
-        })
-      }, function(e) {
-        console.log("Error creating answer",e)
-      });
-    }
-    if (signal.sdp) {
-      peer.webrtc.setRemoteDescription(new this.wrtc.RTCSessionDescription(signal), callback, function(e) {
-        console.log("Error setRemoteDescription",e)
-      })
-    } else if (signal.candidate) {
-      peer.webrtc.addIceCandidate(new this.wrtc.RTCIceCandidate(signal));
-    }
+    peer.handleSignal(signal)
   }
 
   notice(peer,desc) {

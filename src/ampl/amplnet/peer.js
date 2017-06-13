@@ -66,6 +66,29 @@ export default class Peer extends EventEmitter {
     }, e => console.log("error with createOffer",e));
   }
 
+  handleSignal(signal) {
+    if (signal.sdp) {
+      // no callback for answers; but we make one if this is an offer
+      var callback = function() { };
+      if (signal.type == "offer") callback = function() {
+        this.webrtc.createAnswer((answer) => {
+          this.webrtc.setLocalDescription(
+            answer,
+            () => this.send_signal(answer),
+            (e) => console.log("Error setting setLocalDescription",e)
+          )
+        }, 
+        (e) => console.log("Error creating answer",e) );
+      }
+      this.webrtc.setRemoteDescription(
+        new this.wrtc.RTCSessionDescription(signal), 
+        callback, 
+        (e) => console.log("Error setRemoteDescription",e))
+    } else if (signal.candidate) {
+      this.webrtc.addIceCandidate(new this.wrtc.RTCIceCandidate(signal));
+    }
+  }
+
   initializePeerConnection() {
     var webrtc = new this.wrtc.RTCPeerConnection(this.WebRTCConfig)
 

@@ -2,28 +2,22 @@ import Peer from './peer'
 import lz4  from 'lz4'
 import EventEmitter from 'events'
 
-let wrtc
-
-// we're in electron/browser
-if (typeof window != 'undefined') {
-  wrtc = {
-    RTCPeerConnection: RTCPeerConnection,
-    RTCIceCandidate: RTCIceCandidate,
-    RTCSessionDescription: RTCSessionDescription
-  }
-}
-// byowebrtc
-else {
-  wrtc = {
-    RTCPeerConnection: undefined,
-    RTCIceCandidate: undefined,
-    RTCSessionDescription: undefined
-  }
-}
-
 export default class PeerGroup extends EventEmitter {
-  constructor() {
+  constructor(options) {
     super()
+
+    // we're in electron/browser
+    if (typeof window != 'undefined') {
+      this.wrtc = {
+        RTCPeerConnection: RTCPeerConnection,
+        RTCIceCandidate: RTCIceCandidate,
+        RTCSessionDescription: RTCSessionDescription
+      }
+    }
+    // byowebrtc
+    else if (options && options.wrtc) {
+      this.wrtc = options.wrtc
+    }
 
     this.Signaler     = undefined
     this.Peers        = {}
@@ -39,10 +33,6 @@ export default class PeerGroup extends EventEmitter {
     }
 
     this.processSignal = this.processSignal.bind(this)
-  }
-
-  setWRTC(inWrtc) {
-    wrtc = inWrtc
   }
 
   join(signaler) {
@@ -90,7 +80,7 @@ export default class PeerGroup extends EventEmitter {
   }
 
   initialize_peerconnection(peer) {
-    var webrtc = new wrtc.RTCPeerConnection(this.WebRTCConfig)
+    var webrtc = new this.wrtc.RTCPeerConnection(this.WebRTCConfig)
 
     webrtc.onicecandidate = function(event) {
       if (event.candidate) {
@@ -189,11 +179,11 @@ export default class PeerGroup extends EventEmitter {
       });
     }
     if (signal.sdp) {
-      peer.webrtc.setRemoteDescription(new wrtc.RTCSessionDescription(signal), callback, function(e) {
+      peer.webrtc.setRemoteDescription(new this.wrtc.RTCSessionDescription(signal), callback, function(e) {
         console.log("Error setRemoteDescription",e)
       })
     } else if (signal.candidate) {
-      peer.webrtc.addIceCandidate(new wrtc.RTCIceCandidate(signal));
+      peer.webrtc.addIceCandidate(new this.wrtc.RTCIceCandidate(signal));
     }
   }
 

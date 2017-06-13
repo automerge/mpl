@@ -12,15 +12,8 @@ export default class aMPLNet extends EventEmitter {
 
     this.token  = config.slackBotToken || process.env.SLACK_BOT_TOKEN
     this.name   = config.name || process.env.NAME
-    this.peergroup = new PeerGroup()
+    this.peergroup = new PeerGroup(options)
     this.connected = false
-
-    if (options) {
-      if (options.wrtc) {
-        this.peergroup.setWRTC(options.wrtc);
-      }
-    }
-
   }
 
   connect(config) {

@@ -22,8 +22,7 @@ export default class aMPLNet extends EventEmitter {
     this.peers  = {}
     this.clocks = {}
     this.seqs = {}
-    this.PEERS = []
-
+    
     this.peer_id = this.config.peerId
     this.doc_id = this.config.docId
     this.store  = this.config.store
@@ -40,7 +39,6 @@ export default class aMPLNet extends EventEmitter {
       }
 
       this.peergroup.on('peer', (peer) => {
-        this.PEERS.push(peer)
         this.seqs[peer.id] = 0
         if (peer.self == true) { this.SELF = peer }
         this.peers[peer.id] = {
@@ -53,7 +51,6 @@ export default class aMPLNet extends EventEmitter {
         this.emit('peer')
 
         peer.on('disconnect', () => {
-          this.PEERS.splice(this.PEERS.indexOf(peer))
           this.peers[peer.id].connected = false
           this.emit('peer')
         })
@@ -117,12 +114,12 @@ export default class aMPLNet extends EventEmitter {
     let clock = Tesseract.getVClock(state)
     this.clocks[this.SELF.id] = clock
     if (action == "APPLY_DELTAS") {
-      this.PEERS.forEach((peer) => {
+      this.peergroup.peers().forEach((peer) => {
         peer.send({vectorClock: clock })
         this.peers[peer.id].messagesSent += 1
       })
     } else {
-      this.PEERS.forEach((peer) => {
+      this.peergroup.peers().forEach((peer) => {
         this.updatePeer(peer, state, this.clocks[peer.id])
       })
     }

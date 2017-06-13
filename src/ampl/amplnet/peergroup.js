@@ -54,6 +54,10 @@ export default class PeerGroup extends EventEmitter {
     }
   }
 
+  peers() {
+    return Object.values(this.Peers)
+  }
+
   getOrCreatePeer(id, name, handler) {
     if(!this.Peers[id]) {
       let peer = new Peer(this.options, id, name, handler)

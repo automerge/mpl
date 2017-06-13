@@ -66,7 +66,7 @@ export default class Peer extends EventEmitter {
     }, e => console.log("error with createOffer",e));
   }
 
-  initialize_peerconnection() {
+  initializePeerConnection() {
     var webrtc = new this.wrtc.RTCPeerConnection(this.WebRTCConfig)
 
     webrtc.onicecandidate = (event) => {

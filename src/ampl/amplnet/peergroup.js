@@ -57,6 +57,13 @@ export default class PeerGroup extends EventEmitter {
   getOrCreatePeer(id, name, handler) {
     if(!this.Peers[id]) {
       let peer = new Peer(this.options, id, name, handler)
+      // pvh moved this here from peer.js but doesn't understand it
+      peer.on('closed', (peer) => {
+        delete this.Peers[peer.id]
+        if (this.Handshakes[peer.id]) {
+          this.Handshakes[peer.id]()
+        }
+      })
       this.Peers[id] = peer
       this.emit("peer", peer)
     }

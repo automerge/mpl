@@ -66,11 +66,6 @@ export default class Peer extends EventEmitter {
       }
       if (webrtc.iceConnectionState == "failed" || webrtc.iceConnectionState == "closed") {
         this.emit('closed')
-        // XXX FIX THIS -> peergroup on('closed' should get these lines
-        /* delete this.Peers[peer.id]
-        if (this.Handshakes[peer.id]) {
-          this.Handshakes[peer.id]()
-        }*/
       }
     }
 

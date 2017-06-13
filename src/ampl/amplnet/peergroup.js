@@ -59,21 +59,7 @@ export default class PeerGroup extends EventEmitter {
     if(!peer.self) this.initialize_peerconnection()
     this.emit("peer", peer)
 
-    let data = peer.webrtc.createDataChannel("datachannel",{protocol: "tcp"});
-    data.onmessage = msg => this.process_message(peer, msg)
-    data.onclose   = this.notice(peer,"data:onclose")
-    data.onerror   = this.notice(peer,"data:error")
-    data.onopen    = (event) => {
-      peer.data_channel = data
-      peer.emit('connect')
-    }
-    peer.webrtc.createOffer(desc => {
-      peer.webrtc.setLocalDescription(desc,
-        () => {
-            peer.send_signal(desc)
-        },
-        e  => console.log("error on setLocalDescription",e))
-    }, e => console.log("error with createOffer",e));
+    peer.establishDataChannel();
   }
 
   processSignal(msg, signal, handler) {

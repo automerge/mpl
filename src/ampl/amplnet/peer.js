@@ -49,6 +49,25 @@ export default class Peer extends EventEmitter {
     return (event) => console.log("notice:" + this.id + ": " + desc, event)
   }
 
+  establishDataChannel() {
+    let data = this.webrtc.createDataChannel("datachannel",{protocol: "tcp"});
+    data.onmessage = process_message
+    data.onclose   = this.notice("data:onclose")
+    data.onerror   = this.notice("data:error")
+    data.onopen    = (event) => {
+      this.data_channel = data
+      this.emit('connect')
+    }
+
+    this.webrtc.createOffer(desc => {
+      this.webrtc.setLocalDescription(desc,
+        () => {
+            this.send_signal(desc)
+        },
+        e  => console.log("error on setLocalDescription",e))
+    }, e => console.log("error with createOffer",e));
+  }
+
   initialize_peerconnection() {
     var webrtc = new this.wrtc.RTCPeerConnection(this.WebRTCConfig)
 

@@ -26,7 +26,7 @@ export default class PeerGroup extends EventEmitter {
     })
 
     // add ourselves to the peers list with a do-nothing signaller
-    let me = getOrCreatePeer(signaler.session, signaler.name, undefined)
+    let me = this.getOrCreatePeer(signaler.session, signaler.name, undefined)
     
     // we define "connect" and "disconnect" for ourselves as whether
     // we're connected to the signaller. 
@@ -68,7 +68,7 @@ export default class PeerGroup extends EventEmitter {
 
     // this delete gives us the old semantics but i don't know why we do it
     delete this.Peers[id] 
-    let peer = getOrCreatePeer(id, name, handler);
+    let peer = this.getOrCreatePeer(id, name, handler);
     peer.establishDataChannel();
   }
 
@@ -85,7 +85,7 @@ export default class PeerGroup extends EventEmitter {
       }
     }
     else {      
-      let peer = getOrCreatePeer(id)
+      let peer = this.getOrCreatePeer(id)
       peer.handleSignal(signal)
     }
   }

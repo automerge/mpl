@@ -59,10 +59,10 @@ export default class PeerGroup {
     this.dispatch("peer", me)
 
     signaler.on('connect', () => {
-      me.dispatch('connect')
+      me.emit('connect')
     })
     signaler.on('disconnect', () => {
-      me.dispatch('disconnect')
+      me.emit('disconnect')
     })
     signaler.start()
   }

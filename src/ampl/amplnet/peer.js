@@ -1,20 +1,14 @@
 import lz4 from 'lz4'
+import EventEmitter from 'events'
 
-export default class Peer {
+export default class Peer extends EventEmitter {
   constructor(id, name, send_signal) {
+    super()
+
     this.id           = id
     this.name         = name
-    this.handlers     = { connect: [], closed:[], disconnect: [], message: [] }
     this.self         = (send_signal == undefined)
     this.send_signal  = send_signal
-  }
-
-  on(type, handler) {
-    this.handlers[type].push(handler)
-  }
-
-  dispatch(type, arg) {
-    this.handlers[type].forEach((h) => h(arg))
   }
 
   close() {

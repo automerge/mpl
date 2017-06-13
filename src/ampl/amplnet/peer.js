@@ -51,7 +51,7 @@ export default class Peer extends EventEmitter {
 
   establishDataChannel() {
     let data = this.webrtc.createDataChannel("datachannel",{protocol: "tcp"});
-    data.onmessage = process_message
+    data.onmessage = this.process_message.bind(this)
     data.onclose   = this.notice("data:onclose")
     data.onerror   = this.notice("data:error")
     data.onopen    = (event) => {
@@ -97,7 +97,7 @@ export default class Peer extends EventEmitter {
     webrtc.onremovestream = this.notice("onremovestream")
     webrtc.ondatachannel  = (event) => {
       this.data_channel = event.channel
-      this.data_channel.onmessage = process_message
+      this.data_channel.onmessage = this.process_message.bind(this)
       this.data_channel.onerror = e => this.notice("datachannel error",e)
       this.data_channel.onclose = () => this.notice("datachannel closed")
       this.data_channel.onopen = () => this.notice("datachannel opened")

@@ -36,7 +36,7 @@ export default class Peer extends EventEmitter {
 
     // I'm not sure this should be here, but we call it literally
     // every time we instantiate a Peer(), so let's leave it here for now
-    if(!this.self) peer.initializePeerConnection()
+    if(!this.self) this.initializePeerConnection()
   }
 
   close() {

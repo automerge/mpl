@@ -6,6 +6,20 @@ export default class PeerGroup extends EventEmitter {
   constructor(options) {
     super()
 
+    // XXX temporary.
+    // we're in electron/browser
+    if (typeof window != 'undefined') {
+      this.wrtc = {
+        RTCPeerConnection: RTCPeerConnection,
+        RTCIceCandidate: RTCIceCandidate,
+        RTCSessionDescription: RTCSessionDescription
+      }
+    }
+    // byowebrtc
+    else if (options && options.wrtc) {
+      this.wrtc = options.wrtc
+    }
+    
     // XXX cleanup this
     this.options = options;
 

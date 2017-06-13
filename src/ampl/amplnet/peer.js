@@ -51,9 +51,9 @@ export default class Peer extends EventEmitter {
 
   establishDataChannel() {
     let data = this.webrtc.createDataChannel("datachannel",{protocol: "tcp"});
-    data.onmessage = this.process_message.bind(this)
-    data.onclose   = this.notice("data:onclose")
-    data.onerror   = this.notice("data:error")
+    data.onmessage = () => this.process_message()
+    data.onclose   = () => this.notice("data:onclose")
+    data.onerror   = () => this.notice("data:error")
     data.onopen    = (event) => {
       this.data_channel = data
       this.emit('connect')
@@ -61,9 +61,7 @@ export default class Peer extends EventEmitter {
 
     this.webrtc.createOffer(desc => {
       this.webrtc.setLocalDescription(desc,
-        () => {
-            this.send_signal(desc)
-        },
+        () => this.send_signal(desc),
         e  => console.log("error on setLocalDescription",e))
     }, e => console.log("error with createOffer",e));
   }
@@ -71,13 +69,13 @@ export default class Peer extends EventEmitter {
   initialize_peerconnection() {
     var webrtc = new this.wrtc.RTCPeerConnection(this.WebRTCConfig)
 
-    webrtc.onicecandidate = function(event) {
+    webrtc.onicecandidate = (event) => {
       if (event.candidate) {
         this.send_signal(event.candidate)
       }
     }
 
-    webrtc.oniceconnectionstatechange = function(event) {
+    webrtc.oniceconnectionstatechange = (event) => {
       if (webrtc.iceConnectionState == "disconnected") {
         this.emit('disconnect')
       }
@@ -91,10 +89,10 @@ export default class Peer extends EventEmitter {
       }
     }
 
-    webrtc.onconnecting   = this.notice("onconnecting")
-    webrtc.onopen         = this.notice("onopen")
-    webrtc.onaddstream    = this.notice("onaddstream")
-    webrtc.onremovestream = this.notice("onremovestream")
+    webrtc.onconnecting   = () => this.notice("onconnecting")
+    webrtc.onopen         = () => this.notice("onopen")
+    webrtc.onaddstream    = () => this.notice("onaddstream")
+    webrtc.onremovestream = () => this.notice("onremovestream")
     webrtc.ondatachannel  = (event) => {
       this.data_channel = event.channel
       this.data_channel.onmessage = this.process_message.bind(this)
@@ -107,6 +105,7 @@ export default class Peer extends EventEmitter {
     this.webrtc = webrtc
   }
 
+  // XX fixcaps
   process_message(msg) {
     var decompressed = lz4.decode(Buffer.from(msg.data, 'base64'));
     var data = decompressed.toString('utf8');

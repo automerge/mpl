@@ -27,7 +27,7 @@ export default class PeerGroup extends EventEmitter {
 
     let me = new Peer(this.options, signaler.session, signaler.name)
     this.Peers[me.id] = me
-    if(!me.self) this.initialize_peerconnection()
+    if(!me.self) peer.initialize_peerconnection()
     this.emit("peer", me)
 
     signaler.on('connect', () => {
@@ -56,7 +56,7 @@ export default class PeerGroup extends EventEmitter {
     delete this.Handshakes[id]
     let peer = new Peer(this.options, id, name, handler)
     this.Peers[peer.id] = peer
-    if(!peer.self) this.initialize_peerconnection()
+    if(!peer.self) peer.initialize_peerconnection()
     this.emit("peer", peer)
 
     peer.establishDataChannel();

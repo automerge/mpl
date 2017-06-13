@@ -51,6 +51,45 @@ export default class Peer extends EventEmitter {
     return (event) => console.log("notice:" + this.id + ": " + desc, event)
   }
 
+  initializePeerConnection() {
+    var webrtc = new this.wrtc.RTCPeerConnection(this.WebRTCConfig)
+
+    webrtc.onicecandidate = (event) => {
+      if (event.candidate) {
+        this.send_signal(event.candidate)
+      }
+    }
+
+    webrtc.oniceconnectionstatechange = (event) => {
+      if (webrtc.iceConnectionState == "disconnected") {
+        this.emit('disconnect')
+      }
+      if (webrtc.iceConnectionState == "failed" || webrtc.iceConnectionState == "closed") {
+        this.emit('closed')
+        // XXX FIX THIS -> peergroup on('closed' should get these lines
+        /* delete this.Peers[peer.id]
+        if (this.Handshakes[peer.id]) {
+          this.Handshakes[peer.id]()
+        }*/
+      }
+    }
+
+    webrtc.onconnecting   = () => this.notice("onconnecting")
+    webrtc.onopen         = () => this.notice("onopen")
+    webrtc.onaddstream    = () => this.notice("onaddstream")
+    webrtc.onremovestream = () => this.notice("onremovestream")
+    webrtc.ondatachannel  = (event) => {
+      this.data_channel = event.channel
+      this.data_channel.onmessage = (msg) => this.process_message(msg)
+      this.data_channel.onerror = e => this.notice("datachannel error",e)
+      this.data_channel.onclose = () => this.notice("datachannel closed")
+      this.data_channel.onopen = () => this.notice("datachannel opened")
+      this.emit('connect')
+    }
+
+    this.webrtc = webrtc
+  }
+
   establishDataChannel() {
     let data = this.webrtc.createDataChannel("datachannel",{protocol: "tcp"});
     data.onmessage = (msg) => this.process_message(msg)
@@ -89,45 +128,6 @@ export default class Peer extends EventEmitter {
     } else if (signal.candidate) {
       this.webrtc.addIceCandidate(new this.wrtc.RTCIceCandidate(signal));
     }
-  }
-
-  initializePeerConnection() {
-    var webrtc = new this.wrtc.RTCPeerConnection(this.WebRTCConfig)
-
-    webrtc.onicecandidate = (event) => {
-      if (event.candidate) {
-        this.send_signal(event.candidate)
-      }
-    }
-
-    webrtc.oniceconnectionstatechange = (event) => {
-      if (webrtc.iceConnectionState == "disconnected") {
-        this.emit('disconnect')
-      }
-      if (webrtc.iceConnectionState == "failed" || webrtc.iceConnectionState == "closed") {
-        this.emit('closed')
-        // XXX FIX THIS -> peergroup on('closed' should get these lines
-        /* delete this.Peers[peer.id]
-        if (this.Handshakes[peer.id]) {
-          this.Handshakes[peer.id]()
-        }*/
-      }
-    }
-
-    webrtc.onconnecting   = () => this.notice("onconnecting")
-    webrtc.onopen         = () => this.notice("onopen")
-    webrtc.onaddstream    = () => this.notice("onaddstream")
-    webrtc.onremovestream = () => this.notice("onremovestream")
-    webrtc.ondatachannel  = (event) => {
-      this.data_channel = event.channel
-      this.data_channel.onmessage = (msg) => this.process_message(msg)
-      this.data_channel.onerror = e => this.notice("datachannel error",e)
-      this.data_channel.onclose = () => this.notice("datachannel closed")
-      this.data_channel.onopen = () => this.notice("datachannel opened")
-      this.emit('connect')
-    }
-
-    this.webrtc = webrtc
   }
 
   // XX fixcaps

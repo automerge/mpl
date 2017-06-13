@@ -88,8 +88,4 @@ export default class PeerGroup extends EventEmitter {
 
     peer.handleSignal(signal)
   }
-
-  notice(peer,desc) {
-    return (event) => console.log("notice:" + peer.id + ": " + desc, event)
-  }
 }

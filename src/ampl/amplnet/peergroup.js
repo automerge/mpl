@@ -6,32 +6,12 @@ export default class PeerGroup extends EventEmitter {
   constructor(options) {
     super()
 
-    // we're in electron/browser
-    if (typeof window != 'undefined') {
-      this.wrtc = {
-        RTCPeerConnection: RTCPeerConnection,
-        RTCIceCandidate: RTCIceCandidate,
-        RTCSessionDescription: RTCSessionDescription
-      }
-    }
-    // byowebrtc
-    else if (options && options.wrtc) {
-      this.wrtc = options.wrtc
-    }
+    // XXX cleanup this
+    this.options = options;
 
     this.Signaler     = undefined
     this.Peers        = {}
     this.Handshakes   = {}
-    this.WebRTCConfig = {
-      'iceServers': [
-        {url:'stun:stun.l.google.com:19302'},
-        {url:'stun:stun1.l.google.com:19302'},
-        {url:'stun:stun2.l.google.com:19302'},
-        {url:'stun:stun3.l.google.com:19302'},
-        {url:'stun:stun4.l.google.com:19302'}
-      ]
-    }
-
     this.processSignal = this.processSignal.bind(this)
   }
 
@@ -45,9 +25,9 @@ export default class PeerGroup extends EventEmitter {
       console.log("ERROR",e)
     })
 
-    let me = new Peer(signaler.session, signaler.name)
+    let me = new Peer(this.options, signaler.session, signaler.name)
     this.Peers[me.id] = me
-    if(!me.self) this.initialize_peerconnection(me)
+    if(!me.self) this.initialize_peerconnection()
     this.emit("peer", me)
 
     signaler.on('connect', () => {
@@ -71,57 +51,12 @@ export default class PeerGroup extends EventEmitter {
     }
   }
 
-  process_message(peer, msg) {
-    var decompressed = lz4.decode(Buffer.from(msg.data, 'base64'));
-    var data = decompressed.toString('utf8');
-
-    let message = JSON.parse(data)
-    peer.emit('message',message)
-  }
-
-  initialize_peerconnection(peer) {
-    var webrtc = new this.wrtc.RTCPeerConnection(this.WebRTCConfig)
-
-    webrtc.onicecandidate = function(event) {
-      if (event.candidate) {
-        peer.send_signal(event.candidate)
-      }
-    }
-
-    webrtc.oniceconnectionstatechange = function(event) {
-      if (webrtc.iceConnectionState == "disconnected") {
-        peer.emit('disconnect')
-      }
-      if (webrtc.iceConnectionState == "failed" || webrtc.iceConnectionState == "closed") {
-        delete this.Peers[peer.id]
-        peer.emit('closed')
-        if (this.Handshakes[peer.id]) {
-          this.Handshakes[peer.id]()
-        }
-      }
-    }
-
-    webrtc.onconnecting   = this.notice(peer,"onconnecting")
-    webrtc.onopen         = this.notice(peer,"onopen")
-    webrtc.onaddstream    = this.notice(peer,"onaddstream")
-    webrtc.onremovestream = this.notice(peer,"onremovestream")
-    webrtc.ondatachannel  = (event) => {
-      peer.data_channel = event.channel
-      peer.data_channel.onmessage = msg => this.process_message(peer, msg)
-      peer.data_channel.onerror = e => this.notice(peer,"datachannel error",e)
-      peer.data_channel.onclose = () => this.notice(peer,"datachannel closed")
-      peer.data_channel.onopen = () => this.notice(peer,"datachannel opened")
-      peer.emit('connect')
-    }
-
-    peer.webrtc = webrtc
-  }
-
+  // xxx and this
   beginHandshake(id, name, handler) {
     delete this.Handshakes[id]
-    let peer = new Peer(id, name, handler)
+    let peer = new Peer(this.options, id, name, handler)
     this.Peers[peer.id] = peer
-    if(!peer.self) this.initialize_peerconnection(peer)
+    if(!peer.self) this.initialize_peerconnection()
     this.emit("peer", peer)
 
     let data = peer.webrtc.createDataChannel("datachannel",{protocol: "tcp"});
@@ -161,9 +96,9 @@ export default class PeerGroup extends EventEmitter {
     if(this.Peers[id])
       peer = this.Peers[id]
     else {
-      peer = new Peer(id, name, handler)
+      peer = new Peer(this.options, id, name, handler)
       this.Peers[id] = peer
-      if(!peer.self) this.initialize_peerconnection(peer)
+      if(!peer.self) peer.initialize_peerconnection()
       this.emit("peer", peer)
     }
 

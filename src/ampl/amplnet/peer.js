@@ -69,8 +69,8 @@ export default class Peer extends EventEmitter {
   handleSignal(signal) {
     if (signal.sdp) {
       // no callback for answers; but we make one if this is an offer
-      var callback = function() { };
-      if (signal.type == "offer") callback = function() {
+      var callback = () => { };
+      if (signal.type == "offer") callback = () => {
         this.webrtc.createAnswer((answer) => {
           this.webrtc.setLocalDescription(
             answer,

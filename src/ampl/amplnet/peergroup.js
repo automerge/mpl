@@ -92,7 +92,7 @@ export default class PeerGroup extends EventEmitter {
       }
     }
     else {      
-      let peer = this.getOrCreatePeer(id)
+      let peer = this.getOrCreatePeer(id,name,handler)
       peer.handleSignal(signal)
     }
   }

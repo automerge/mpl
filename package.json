@@ -15,11 +15,11 @@
   },
   "dependencies": {
     "@slack/client": "^3.10.0",
-    "body-parser": "1.17.2",
-    "bonjour": "3.5.0",
+    "body-parser": "^1.17.2",
+    "bonjour": "^3.5.0",
     "debug": "2.6.8",
     "dotenv": "4.0.0",
-    "express": "4.15.3",
+    "express": "^4.15.3",
     "lz4": "0.5.3",
     "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git#v0.3.0",
     "uuid": "^3.0.1"

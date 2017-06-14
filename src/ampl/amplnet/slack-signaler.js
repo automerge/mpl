@@ -19,24 +19,27 @@ function init(config) {
     onConnectHandler = h
   }
   let opts = { retryConfig: { forever: true, maxTimeout: 30 * 1000 }};
+  let connected = true
 
   rtm = new RtmClient(config.bot_token,opts);
   DOC_ID = config.doc_id
 
   // The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload
   rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
-    onConnectHandler()
-    HANDLERS['connect']()
-    for (const c of rtmStartData.channels) {
-      if (c.is_member && c.name ==='signals') { CHANNEL = c.id }
-    }
-    console.log(`Logged in as ${rtmStartData.self.name} of team ${rtmStartData.team.name}`);
+      onConnectHandler()
+      HANDLERS['connect']()
+      for (const c of rtmStartData.channels) {
+        if (c.is_member && c.name ==='signals') { CHANNEL = c.id }
+      }
+      console.log(`Logged in as ${rtmStartData.self.name} of team ${rtmStartData.team.name}`);
   });
 
   // you need to wait for the client to fully connect before you can send messages
   rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {
-    let msg = JSON.stringify({ action: "hello", name:NAME, session:SESSION, doc_id:DOC_ID })
-    rtm.sendMessage(msg, CHANNEL);
+    if (connected) { // race condition
+      let msg = JSON.stringify({ action: "hello", name:NAME, session:SESSION, doc_id:DOC_ID })
+      rtm.sendMessage(msg, CHANNEL);
+    }
   });
 
   rtm.on(CLIENT_EVENTS.RTM.WS_ERROR, function() {
@@ -93,9 +96,12 @@ function init(config) {
     session: SESSION,
     name: NAME,
     on: (type,handler) => { HANDLERS[type] = handler },
-    start: () => { rtm.start() },
+    start: () => {
+      connected = true
+      rtm.start() },
     stop: () => {
       rtm.disconnect()
+      connected = false
       HANDLERS['disconnect']()
     }
   }

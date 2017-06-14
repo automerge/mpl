@@ -61,7 +61,7 @@ export default class Store {
       this.network = network
     }
 
-    this.network.broadcast(newState, action.type)
+    this.network.broadcastState(newState, action.type)
     this.listeners.forEach((listener) => listener())
   }
 

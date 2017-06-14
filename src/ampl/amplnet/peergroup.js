@@ -47,6 +47,7 @@ export default class PeerGroup extends EventEmitter {
       this.Signaler = undefined
       for (let id in this.Peers) {
         this.Peers[id].close()
+        delete this.Peers[id]
       }
       // throw away all cached handshakes
       this.Handshakes = {}

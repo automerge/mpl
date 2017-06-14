@@ -115,8 +115,13 @@ export default class aMPLNet extends EventEmitter {
     this.clocks[this.SELF.id] = clock
     if (action == "APPLY_DELTAS") {
       this.peergroup.peers().forEach((peer) => {
-        peer.send({vectorClock: clock })
-        this.peers[peer.id].messagesSent += 1
+        try {
+          peer.send({vectorClock: clock })
+          this.peers[peer.id].messagesSent += 1
+        }
+        catch (e) {
+          console.log("Error sending to ["+peer.id+"]:", e)
+        }
       })
     } else {
       this.peergroup.peers().forEach((peer) => {

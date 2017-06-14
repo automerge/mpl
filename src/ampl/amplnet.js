@@ -1,5 +1,5 @@
 import ss from './amplnet/slack-signaler'
-import bs from './amplnet/bonjour-signaler'
+import BonjourSignaler from './amplnet/bonjour-signaler'
 
 import PeerGroup from './amplnet/peergroup'
 import Tesseract from 'tesseract'
@@ -35,7 +35,7 @@ export default class aMPLNet extends EventEmitter {
         bot = ss.init({doc_id: this.doc_id, name: this.name, bot_token: this.token, session: this.peer_id })
       }
       else {
-        bot = bs.init({doc_id: this.doc_id, name: this.name, session: this.peer_id })
+        bot = new BonjourSignaler({doc_id: this.doc_id, name: this.name, session: this.peer_id })
       }
 
       this.peergroup.on('peer', (peer) => {

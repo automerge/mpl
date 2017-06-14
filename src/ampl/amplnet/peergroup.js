@@ -5,7 +5,7 @@ import EventEmitter from 'events'
 export default class PeerGroup extends EventEmitter {
   constructor(options) {
     super()
-    
+
     // XXX cleanup this
     this.options = options;
 
@@ -27,9 +27,9 @@ export default class PeerGroup extends EventEmitter {
 
     // add ourselves to the peers list with a do-nothing signaller
     let me = this.getOrCreatePeer(signaler.session, signaler.name, undefined)
-    
+
     // we define "connect" and "disconnect" for ourselves as whether
-    // we're connected to the signaller. 
+    // we're connected to the signaller.
     signaler.on('connect', () => {
       me.emit('connect')
     })
@@ -55,7 +55,13 @@ export default class PeerGroup extends EventEmitter {
   }
 
   peers() {
-    return Object.values(this.Peers)
+    let values = []
+
+    Object.keys(this.Peers).forEach((key) => {
+      values.push(this.Peers[key])
+    })
+
+    return values
   }
 
   getOrCreatePeer(id, name, handler) {
@@ -78,7 +84,7 @@ export default class PeerGroup extends EventEmitter {
     delete this.Handshakes[id] // we're moving now, so discard this handshake
 
     // this delete gives us the old semantics but i don't know why we do it
-    delete this.Peers[id] 
+    delete this.Peers[id]
     let peer = this.getOrCreatePeer(id, name, handler);
     peer.establishDataChannel();
   }
@@ -88,14 +94,14 @@ export default class PeerGroup extends EventEmitter {
     let name = msg.name
 
     if (msg.action == "hello") {
-      if (id in this.Peers) { 
+      if (id in this.Peers) {
         // we save a handshake for later if we already know them
         this.Handshakes[id] = () => { this.beginHandshake(id,name,handler) }
       } else {
         this.beginHandshake(id,name,handler)
       }
     }
-    else {      
+    else {
       let peer = this.getOrCreatePeer(id,name,handler)
       peer.handleSignal(signal)
     }

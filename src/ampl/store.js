@@ -84,7 +84,7 @@ export default class Store {
           doc[key] = state[key]
       })
 
-      doc.docId = uuid()
+      doc.docId = uuidv4()
     })
   }
 

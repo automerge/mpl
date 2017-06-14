@@ -78,12 +78,7 @@ export default class Store {
   }
 
   forkDocument(state, action) {
-    return Tesseract.changeset(Tesseract.init(), "fork document", (doc) => {
-      Object.keys(state).forEach((key) => {
-        if(key != "docId")
-          doc[key] = state[key]
-      })
-
+    return Tesseract.changeset(state, "fork document", (doc) => {
       doc.docId = uuidv4()
     })
   }

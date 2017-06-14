@@ -55,9 +55,9 @@ describe("Store", function() {
 
   it("allows you to fork documents", function() {
     let store = createStore()
-    store.dispatch({ type: "INCREMENT" })
-
     let originalDocId = store.getState().docId
+
+    store.dispatch({ type: "INCREMENT" })
     store.dispatch({ type: "FORK_DOCUMENT" })
 
     assert.equal(store.getState().counter, 1)

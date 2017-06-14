@@ -81,21 +81,23 @@ $ npm start & npm start
 
 ### `Store`
 
-`aMPL.Store` is modeled off of [Redux](http://redux.js.org/) and follows the same basic pattern.
+The `Store` class is modeled off of [Redux](http://redux.js.org/) and follows the same basic pattern.
 
 #### `new Store(reducer)`
 
-The `Store` constructor accepts a reducer function. When an action is dispatched to the store, it first checks against aMPL's provided actions and then invokes your reducer if the action did not map to any of the provided ones.
+Constructor that accepts a reducer function. When an action is dispatched to the store, it first checks against aMPL's provided reducer actions and then invokes your reducer if the action did not map to any of the provided ones.
 
 #### `getState()`
 
-`getState` returns the current state object including all of your persisted data.
+Returns the current state object including all of your persisted data.
 
 #### `getHistory()`
 
-returns the changeset history from the state. Ex:
+Returns the changeset history from the state.
 
-```
+**Ex:**
+
+```js
 store.getHistory()
 => [
   {
@@ -117,15 +119,15 @@ store.getHistory()
 
 #### `dispatch(action)`
 
-`dispatch` sends an action through your reducer. You should only modify the state through `dispatch`. Note: dispatch is a synchronous function.
+Sends an action through your reducer. You should only modify the state through `dispatch`. Note: dispatch is a synchronous function.
 
 #### `subscribe(listener)`
 
-`subscribe` allows to register a listener callback. All listeners are invoked whenver there is a state change in the store, including inbound changes that come in through other peers over the network.
+Allows to register a listener callback. All listeners are invoked whenver there is a state change in the store, including inbound changes that come in through other peers over the network.
 
 #### `save()`
 
-`save` returns a JSON serialization of your store's state. This is useful for persisting your state to a file, which can then be opened later by dispatching a `"OPEN_DOCUMENT"` action.
+Returns a JSON serialization of your store's state. This is useful for persisting your state to a file, which can then be opened later by dispatching a `"OPEN_DOCUMENT"` action.
 
 
 ### Provided Actions
@@ -134,7 +136,8 @@ store.getHistory()
 
 #### `"NEW_DOCUMENT"`
 
-The `"NEW_DOCUMENT" action resets the store's state to a new document.  
+Resets the store's state to a new document.
+
 **Ex:**
 
 ```js
@@ -145,7 +148,7 @@ this.store.dispatch({
 
 #### `"OPEN_DOCUMENT"`
 
-The `"OPEN_DOCUMENT"` action accepts a `docId` or `file` blob as parameters (i.e. the serialized output from `aMPL.Store#save()`. 
+Opens a new document. Accepts a `docId` or `file` blob as parameters (i.e. the serialized output from `aMPL.Store#save()`. 
 
 **Ex:**
 
@@ -187,12 +190,19 @@ $ npm run test
 
 ## Versions
 
-When its time to cut a release do the following
+When it's time to cut a release do the following:
 
-1. ~ edit local package.json and set version number (eg. 0.0.5)
-2. git commit -a -m "set version 0.0.5"
-3. git tag v0.0.5
-4. git push --tags
-5. ~ edit trellis package.json to change the commit-ish on ampl to #v0.0.5
-6. git commit -a "bump ampl version"
-7. git push
+1. Edit local package.json and set version number (eg. 0.0.5)
+2. Make sure all code is compiled:
+
+```bash
+$ npm run compile
+```
+
+3. Create a commit, tag, and push:
+
+```bash
+$ git commit -a -m "v0.0.5"
+$ git tag v0.0.5
+$ git push --tags
+```

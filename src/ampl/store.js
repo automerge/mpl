@@ -36,6 +36,9 @@ export default class Store {
       case "MERGE_DOCUMENT":
         newState = this.mergeDocument(state, action)
         break;
+      case "FORK_DOCUMENT":
+        newState = this.forkDocument(state, action)
+        break;
       case "APPLY_DELTAS":
         newState = this.applyDeltas(state, action)
         break;
@@ -72,6 +75,17 @@ export default class Store {
 
   save() {
     return Tesseract.save(this.getState())
+  }
+
+  forkDocument(state, action) {
+    return Tesseract.changeset(Tesseract.init(), "fork document", (doc) => {
+      Object.keys(state).forEach((key) => {
+        if(key != "docId")
+          doc[key] = state[key]
+      })
+
+      doc.docId = uuid()
+    })
   }
 
   openDocument(state, action) {

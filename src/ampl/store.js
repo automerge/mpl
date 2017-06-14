@@ -73,6 +73,10 @@ export default class Store {
     return this.state
   }
 
+  getHistory() {
+    return Tesseract.getHistory(this.state)
+  }
+
   save() {
     return Tesseract.save(this.getState())
   }

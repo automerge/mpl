@@ -91,6 +91,30 @@ The `Store` constructor accepts a reducer function. When an action is dispatched
 
 `getState` returns the current state object including all of your persisted data.
 
+#### `getHistory()`
+
+returns the changeset history from the state. Ex:
+
+```
+store.getHistory()
+=> [
+  {
+    "changeset": {
+      "actor": "61d8b814-463c-4092-b71d-7137873840e4",
+      "seq": 1,
+      "deps": {},
+      "message": "new document",
+      "ops": [...]
+    },
+    "snapshot": {
+      "cards": [...],
+      "lists": [...],
+      "docId": "saffron-guangzhou-85"
+    }
+  }
+]
+```
+
 #### `dispatch(action)`
 
 `dispatch` sends an action through your reducer. You should only modify the state through `dispatch`. Note: dispatch is a synchronous function.

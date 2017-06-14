@@ -10,7 +10,7 @@ function createStore() {
   let store = new aMPL.Store((state, action) => {
     switch(action.type) {
       case "INCREMENT":
-        return aMPL.Tesseract.changeset(state, (doc) => {
+        return aMPL.Tesseract.changeset(state, "INCREMENT", (doc) => {
           doc.counter = (state.counter || 0) + 1
         })
       default:
@@ -63,6 +63,19 @@ describe("Store", function() {
     assert.equal(store.getState().counter, 1)
     assert.notEqual(store.getState().docId, originalDocId)
     assert.notEqual(store.getState().docId, undefined)
+  })
+
+})
+
+describe("getHistory()", function() {
+  it("returns the store's changeset history", function() {
+    let store = createStore()
+    assert.equal(store.getHistory().length, 1)
+    assert.equal(store.getHistory()[0].changeset.message, "new document")
+
+    store.dispatch({ type: "INCREMENT" })
+    assert.deepEqual(store.getHistory().length, 2)
+    assert.equal(store.getHistory()[1].changeset.message, "INCREMENT")
   })
 })
 

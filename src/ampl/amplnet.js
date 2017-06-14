@@ -77,7 +77,7 @@ export default class aMPLNet extends EventEmitter {
         peer.on('message', (m) => {
           let store = this.store
 
-          routeSignal(peer,m)
+          this.routeSignal(peer,m)
 
           if (m.knownPeers) {
 //            this.peersOfPeers[peer.id] = m.knownPeers

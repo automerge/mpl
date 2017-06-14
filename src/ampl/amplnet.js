@@ -40,6 +40,7 @@ export default class aMPLNet extends EventEmitter {
       }
 
       this.peergroup.on('peer', (peer) => {
+        console.log("ON PEER",peer.id)
         this.seqs[peer.id] = 0
         if (peer.self == true) { this.SELF = peer }
         this.peers[peer.id] = {
@@ -64,6 +65,7 @@ export default class aMPLNet extends EventEmitter {
         })
 
         peer.on('connect', () => {
+          console.log("ON PEER CONNECT",peer.id)
           this.peers[peer.id].connected = true
           this.peers[peer.id].lastActivity = Date.now()
           this.peers[peer.id].messagesSent += 1
@@ -112,7 +114,7 @@ export default class aMPLNet extends EventEmitter {
     if (m.action) {
       if (m.to == this.SELF.id) {
         // its for me - process it
-        console.log("SIGNAL", m)
+        console.log("GOT SIGNAL", m)
         this.peergroup.processSignal(m, m.body , (reply) => {
           if (m.action == "offer") {
             let replyMsg = {
@@ -123,6 +125,7 @@ export default class aMPLNet extends EventEmitter {
               to:      m.session,
               body:    reply
             }
+            console.log("SEND REPLY", m)
             peer.send(replyMsg)
           }
         })
@@ -130,7 +133,8 @@ export default class aMPLNet extends EventEmitter {
         // its not for me - forward it on
         console.log("SIGNAL: ROUTE TO",m.to)
         this.peergroup.peers().forEach((p) => {
-          if (p == m.to) {
+          if (p.id == m.to) {
+            console.log("SENDING")
             p.send(m)
           }
         })
@@ -162,7 +166,7 @@ export default class aMPLNet extends EventEmitter {
         let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name}
         // process the hello message to get the offer material
         this.peergroup.processSignal(msg, undefined, (offer) => {
-          console.log("Offer", remotePeerId)
+          console.log("SEND OFFER", remotePeerId)
           // send the exact same offer through the system
           let offerMsg = { action: "offer", name: this.SELF.name, session:this.SELF.id, doc_id:this.doc_id, to:remotePeerId, body:offer}
           peer.send(offerMsg)

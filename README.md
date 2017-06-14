@@ -134,7 +134,7 @@ store.getHistory()
 
 #### `"NEW_DOCUMENT"`
 
-The `"NEW_DOCUMENT" action changes resets the store's state to a new document.  
+The `"NEW_DOCUMENT" action resets the store's state to a new document.  
 **Ex:**
 
 ```js
@@ -152,6 +152,18 @@ The `"OPEN_DOCUMENT"` action accepts a `docId` or `file` blob as parameters (i.e
 ```js
 this.store.dispatch({
   type: "OPEN_DOCUMENT", docId: "1234-5678-9"
+})
+```
+
+#### `"FORK_DOCUMENT"`
+
+Creates a fork of the current document, copying all of its current data but creating a new docId.
+
+**Ex:**
+
+```js
+this.store.dispatch({
+  type: "FORK_DOCUMENT"
 })
 ```
 

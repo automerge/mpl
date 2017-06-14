@@ -6,7 +6,8 @@
   "license": "ISC",
   "scripts": {
     "compile": "babel src --out-dir lib",
-    "test": "mocha --compilers js:babel-core/register test/ampl.js"
+    "test": "mocha --compilers js:babel-core/register test/ampl.js",
+    "watch": "babel src --watch --out-dir lib"
   },
   "babel": {
     "presets": [

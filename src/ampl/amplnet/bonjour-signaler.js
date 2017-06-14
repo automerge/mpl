@@ -1,5 +1,5 @@
 let bonjour = require('bonjour')()
-let express = require('express')
+let WebSocket = require('ws');
 let bodyParser = require('body-parser')
 let request = require('request')
 let uuidv4 = require('uuid/v4');
@@ -24,10 +24,15 @@ export default class BonjourSignaller extends EventEmitter {
   stop() { /*this.sendGoodbye(); */ this.emit('disconnect') } // XXX fix this: i haven't implemented unpublish
 
   prepareSignalServer() {
-    var app = express();
-    app.use(bodyParser.json());
-    app.post('/', () => this.hearOffer);
-    app.listen(this.PORT);
+    const wss = new WebSocket.Server({ port: this.PORT });
+
+    wss.on('connection', (ws) => {
+      ws.on('message', (raw) => {
+        console.log('received: %s', raw);
+        var signal = JSON.parse(raw)
+        this.hearOffer(ws, signal);
+      });
+    });
   }
 
   initializeBonjour() {
@@ -76,38 +81,36 @@ export default class BonjourSignaller extends EventEmitter {
     let msg = {name: this.NAME, session: this.SESSION, action: 'offer'}
     msg.body = offer;
 
-    let opts = {method: 'POST', 
-      url: "http://"+service.host+":"+service.port+"/", 
-      json: msg};
-    console.log("Sending post request to peer server:", opts)
-    request(opts,
-        (error ,response, body) => {
-          if (error) {
-            // We should probably be smarter about this.
-            console.log(error)
-            return;
-          }
+    let ws;
+    if (!ws) {
+      ws = new WebSocket("ws://"+service.host+":"+service.port+"/");
+    }
 
-          console.log("Reply received: ")
-          console.log(body)
-          this.hearReply(body)
-    })
+    ws.on('open', () => {
+      ws.send(JSON.stringify(msg));
+    });
+
+    ws.on('message', (data) => {
+      console.log("Reply received: ")
+      console.log(data);
+      this.hearReply(JSON.parse(data))
+    });
   }
 
   // express calls this in response to a post on "/"
-  hearOffer(req, res) {
-    console.log("hearOffer:", req, res)
-    let meta = {name: req.body.name, session: req.body.session, action: 'offer'}
-    this.emit('offer', meta, req.body.body, (reply) => {
+  hearOffer(ws, signal) {
+    console.log("hearOffer:", ws, signal)
+    let meta = {name: signal.name, session: signal.session, action: 'offer'}
+    this.emit('offer', meta, signal.body, (reply) => {
       let msg = {name: this.NAME, session: this.SESSION, body: reply, action: 'reply'}
-      this.sendReply(res, msg)
+      this.sendReply(ws, msg)
     })
   }
 
   // this gets sent over the wire by express.
-  sendReply(res, reply) {
-    console.log("sendReply()", res, reply)
-    res.json(reply)
+  sendReply(ws, reply) {
+    console.log("sendReply()", ws, reply)
+    ws.send(JSON.stringify(reply))
   }
 
   // request receives this in response to the above.

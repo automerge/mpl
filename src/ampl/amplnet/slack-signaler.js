@@ -20,7 +20,6 @@ function init(config) {
   }
   let opts = { retryConfig: { forever: true, maxTimeout: 30 * 1000 }};
   let connected = true
-  let lastCon = 0
 
   rtm = new RtmClient(config.bot_token,opts);
   DOC_ID = config.doc_id
@@ -70,17 +69,11 @@ function init(config) {
       let msg = JSON.parse(message.text)
       if (msg.session != SESSION) {
         if (msg.doc_id == DOC_ID) {
-          if (lastCon != 0 && lastCon != msg.session) {
-            console.log(`Got a message for ${msg.session} ignoring b/c I already heard from ${lastCon}`)
-            return
-          }
           if (msg.action == "hello") { // "hello" doesn't have a msg.body, so pass undefined
-            setTimeout(() => {
-              HANDLERS['hello'](msg, undefined, (reply) => {
-                  let msgJSON = JSON.stringify({ action: "offer", name: NAME, session:SESSION, doc_id:DOC_ID, to:msg.session, body:reply})
-                  rtm.sendMessage(msgJSON, CHANNEL);
-              })
-            },Math.floor(Math.random()*1000))
+            HANDLERS['hello'](msg, undefined, (reply) => {
+                let msgJSON = JSON.stringify({ action: "offer", name: NAME, session:SESSION, doc_id:DOC_ID, to:msg.session, body:reply})
+                rtm.sendMessage(msgJSON, CHANNEL);
+            })
           }
           if (msg.action == "offer" && msg.to == SESSION) {
             HANDLERS['offer'](msg, msg.body, (reply) => {
@@ -89,7 +82,6 @@ function init(config) {
             })
           }
           if (msg.action == "reply" && msg.to == SESSION) {
-            lastCon = msg.session
             HANDLERS['reply'](msg, msg.body)
           }
         }

@@ -40,7 +40,7 @@ export default class aMPLNet extends EventEmitter {
       }
 
       this.peergroup.on('peer', (peer,webrtc) => {
-        console.log("ON PEER",peer.id,peer.self)
+        console.log("ON PEER",peer.id,webrtc)
         this.seqs[peer.id] = 0
         if (peer.self == true) { this.SELF = peer }
         this.peers[peer.id] = {
@@ -156,8 +156,10 @@ export default class aMPLNet extends EventEmitter {
     let ids = Object.keys(knownPeers)
     for (let i in ids) {
       let remotePeerId = ids[i]
+      console.log("CONSIDERING PEER",remotePeerId)
       if (!(remotePeerId in this.peers) && knownPeers[remotePeerId].connected && remotePeerId < this.SELF.id) {
         // fake a hello message
+        console.log("WEBRTC HELLO")
         let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name, webrtc: true}
         // process the hello message to get the offer material
         this.peergroup.processSignal(msg, undefined, (offer) => {

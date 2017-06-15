@@ -50,7 +50,7 @@ export default class BonjourSignaller extends EventEmitter {
           console.log("peerDiscovery(): Wrong docid. (Saw: "+meta.docid+", want: " + this.DOC_ID+")")
           return
         }
-        this.hearHello(service)
+        this.hearHello(service.txt.name, service.txt.session, service.host, service.port)
     })
   }
 
@@ -76,22 +76,22 @@ export default class BonjourSignaller extends EventEmitter {
     if(this.service) this.service.stop();
   }
 
-  // initiated by comes from bonjour `find()`.
-  hearHello(service) {
+  // initiated by bonjour `find()`.
+  hearHello(name, session, host, port) {
     console.log("hearHello()")
-    let meta = {name: service.txt.name, session: service.txt.session, action: 'hello'}
-    this.emit('hello', meta, undefined, (offer) => this.sendOffer(service, offer))
+    let meta = {name: name, session: session, action: 'hello'}
+    this.emit('hello', meta, undefined, (offer) => this.sendOffer(host, port, offer))
   }
 
   // initiated by hearHello()
-  sendOffer(service, offer) {
-    console.log("sendOffer():", service.host+":"+service.port )
+  sendOffer(host, port, offer) {
+    console.log("sendOffer():", host+":"+port )
     let msg = {name: this.NAME, session: this.SESSION, action: 'offer'}
     msg.body = offer;
 
     // This is creating a pile of websockets but to do this right I need to 
     // queue up messages that arrive here until we have an 'open' websocket and then send them.
-    let ws = new WebSocket("ws://"+service.host+":"+service.port+"/");
+    let ws = new WebSocket("ws://"+host+":"+port+"/");
     ws.on('open', () => {
       ws.send(JSON.stringify(msg));
     });

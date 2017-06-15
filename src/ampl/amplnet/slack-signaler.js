@@ -70,6 +70,7 @@ function init(config) {
       let msg = JSON.parse(message.text)
       if (msg.session != SESSION) {
         if (msg.doc_id == DOC_ID) {
+          console.log(`MSG=${msg.session} LOCK=${lastCon}`)
           if (lastCon != 0 && lastCon != msg.session) {
             console.log(`Got a message for ${msg.session} ignoring b/c I already heard from ${lastCon}`)
             return
@@ -83,6 +84,7 @@ function init(config) {
             },Math.floor(Math.random()*1000))
           }
           if (msg.action == "offer" && msg.to == SESSION) {
+            lastCon = msg.session
             HANDLERS['offer'](msg, msg.body, (reply) => {
                 let msgJSON = JSON.stringify({ action: "reply", name: NAME, session:SESSION, doc_id:DOC_ID, to:msg.session, body:reply})
                 rtm.sendMessage(msgJSON, CHANNEL);

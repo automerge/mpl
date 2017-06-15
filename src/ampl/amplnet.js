@@ -49,7 +49,7 @@ export default class aMPLNet extends EventEmitter {
           name: peer.name,
           lastActivity: Date.now(),
           messagesSent: 0,
-          messagesReceived: 0
+          messagesReceived: 0,
           webrtc: webrtc
         }
         this.emit('peer')

@@ -15,5 +15,9 @@ let store = new ampl.default.Store(
 
 store.dispatch({ type: "OPEN_DOCUMENT", docId: "botcounter" })
 
-setInterval( () => store.dispatch({ type: "INCREMENT_COUNTER", docId: "botcounter" }), 5000)
+//setInterval( () => store.dispatch({ type: "INCREMENT_COUNTER", docId: "botcounter" }), 5000)
 
+store.subscribe( () => {
+    var state = store.getState()
+    console.log("State changed: ", state)
+})

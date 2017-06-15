@@ -67,8 +67,10 @@ export default class BonjourSignaller extends EventEmitter {
   sendHello() {
     console.log("sendHello()")
     this.prepareSignalServer();
-    this.searchBonjour();
-    setTimeout( () => { this.publishBonjour(); }, 2000) // wait a couple seconds to reduce race conditions
+    if (!process.env.BLOCKBONJOUR) { 
+      this.searchBonjour();
+      setTimeout( () => { this.publishBonjour(); }, 2000) // wait a couple seconds to reduce race conditions
+    }
   }
 
   sendGoodbye() {

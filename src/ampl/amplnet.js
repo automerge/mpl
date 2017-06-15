@@ -31,12 +31,11 @@ export default class aMPLNet extends EventEmitter {
     this.connected = true
 
     if (this.doc_id) {
-      let bot;
       if (process.env.SLACK_BOT_TOKEN) {
-        bot = ss.init({doc_id: this.doc_id, name: this.name, bot_token: this.token, session: this.peer_id })
+        this.signaler = ss.init({doc_id: this.doc_id, name: this.name, bot_token: this.token, session: this.peer_id })
       }
       else {
-        bot = new BonjourSignaler({doc_id: this.doc_id, name: this.name, session: this.peer_id })
+        this.signaler = new BonjourSignaler({doc_id: this.doc_id, name: this.name, session: this.peer_id })
       }
 
       this.peergroup.on('peer', (peer,webrtc) => {
@@ -103,7 +102,7 @@ export default class aMPLNet extends EventEmitter {
 
       })
 
-      this.peergroup.join(bot)
+      this.peergroup.join(this.signaler)
     } else {
       console.log("Network disabled")
       console.log("TRELLIS_DOC_ID:", this.doc_id)

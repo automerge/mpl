@@ -8,6 +8,7 @@ let rtm;// = new RtmClient(bot_token);
 let uuidv4 = require('uuid/v4');
 
 function init(config) {
+  console.log("INIT SLACK SIGNALER")
   let HANDLERS = { hello: () => {}, reply: () => {}, offer: () => {}, error: () => {}, connect: () => {}, disconnect: () => {} }
   let CHANNEL;
   let SESSION = config.session || uuidv4()
@@ -27,6 +28,7 @@ function init(config) {
 
   // The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload
   rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
+    console.log("SLACK SIGNALER AUTH")
     if (connected) { // race condition
       onConnectHandler()
       HANDLERS['connect']()
@@ -40,6 +42,7 @@ function init(config) {
   // you need to wait for the client to fully connect before you can send messages
   rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {
     if (connected) { // race condition
+      console.log("SLACK SIGNALER SEND HELLO")
       let msg = JSON.stringify({ action: "hello", name:NAME, session:SESSION, doc_id:DOC_ID })
       rtm.sendMessage(msg, CHANNEL);
     }
@@ -68,6 +71,7 @@ function init(config) {
     if (last_ts && last_ts > ts) console.log("WARNING - TS OUT OF ORDER")
     try {
       let msg = JSON.parse(message.text)
+      console.log("SLACK SIGNALER MSG",msg)
       if (msg.session != SESSION) {
         if (msg.doc_id == DOC_ID) {
           console.log(`MSG=${msg.session} LOCK=${lastCon}`)

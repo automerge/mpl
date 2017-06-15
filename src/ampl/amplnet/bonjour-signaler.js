@@ -21,9 +21,10 @@ export default class BonjourSignaller extends EventEmitter {
   }
 
   start() { this.sendHello(); this.emit('connect') }
-  stop() { /*this.sendGoodbye(); */ this.emit('disconnect') } // XXX fix this: i haven't implemented unpublish
+  stop() { this.sendGoodbye(); this.emit('disconnect') } // XXX fix this: i haven't implemented unpublish
 
   prepareSignalServer() {
+    console.log("prepareSignalServer: listening on ", this.PORT)
     const wss = new WebSocket.Server({ port: this.PORT });
 
     wss.on('connection', (ws) => {
@@ -35,37 +36,44 @@ export default class BonjourSignaller extends EventEmitter {
     });
   }
 
-  initializeBonjour() {
-    let browser = bonjour.find({ type: 'ampl' }, 
+  searchBonjour() {
+    this.browser = bonjour.find({ type: 'ampl' }, 
       (service) => {
-        console.log("Detected a new service. (This should be once per service.)")
-        console.log(service)
+        console.log("peerDiscovery(): ", service.host, ":", service.port)
+        console.log("peerDiscovery(): ", service.txt)
         let meta = service.txt
         if (meta.session == this.SESSION) {
-          console.log("Detected our own session.")
+          console.log("peerDiscovery(): Own session.")
           return
         }
         if (meta.docid != this.DOC_ID) {
-          console.log("Overheard: "+meta.docid+" (listening for: " + this.DOC_ID+")")
+          console.log("peerDiscovery(): Wrong docid. (Saw: "+meta.docid+", want: " + this.DOC_ID+")")
           return
         }
         this.hearHello(service)
     })
-    
+  }
+
+  publishBonjour() {
     // text is encoded into a k/v object by bonjour
     // bonjour downcases keynames.
     let text = {session: this.SESSION, name: this.NAME, docid:this.DOC_ID}
-    console.log("text is :", text)
-    setTimeout( () => {
-      bonjour.publish({ name: 'ampl-'+ this.SESSION, type: 'ampl', port: this.PORT, txt: text })
-    }, 2000)
+    let publish = { name: 'ampl-'+ this.SESSION, type: 'ampl', port: this.PORT, txt: text };
+    console.log("publishBonjour():",  'ampl-'+ this.SESSION, "type:", 'ampl', "port:", this.PORT, "txt:", JSON.stringify(text).split('\n').join(' '))
+    this.service = bonjour.publish(publish)
   }
 
   // initiated by .start()
   sendHello() {
     console.log("sendHello()")
     this.prepareSignalServer();
-    this.initializeBonjour();
+    this.searchBonjour();
+    setTimeout( () => { this.publishBonjour(); }, 2000) // wait a couple seconds to reduce race conditions
+  }
+
+  sendGoodbye() {
+    if(this.browser) this.browser.stop();
+    if(this.service) this.service.stop();
   }
 
   // initiated by comes from bonjour `find()`.
@@ -77,29 +85,25 @@ export default class BonjourSignaller extends EventEmitter {
 
   // initiated by hearHello()
   sendOffer(service, offer) {
-    console.log("sendOffer()", service, offer)
+    console.log("sendOffer():", service.host+":"+service.port )
     let msg = {name: this.NAME, session: this.SESSION, action: 'offer'}
     msg.body = offer;
 
-    let ws;
-    if (!ws) {
-      ws = new WebSocket("ws://"+service.host+":"+service.port+"/");
-    }
-
+    // This is creating a pile of websockets but to do this right I need to 
+    // queue up messages that arrive here until we have an 'open' websocket and then send them.
+    let ws = new WebSocket("ws://"+service.host+":"+service.port+"/");
     ws.on('open', () => {
       ws.send(JSON.stringify(msg));
     });
 
     ws.on('message', (data) => {
-      console.log("Reply received: ")
-      console.log(data);
       this.hearReply(JSON.parse(data))
     });
   }
 
   // express calls this in response to a post on "/"
   hearOffer(ws, signal) {
-    console.log("hearOffer:", ws, signal)
+    console.log("hearOffer: from", signal.name, "/", signal.session)
     let meta = {name: signal.name, session: signal.session, action: 'offer'}
     this.emit('offer', meta, signal.body, (reply) => {
       let msg = {name: this.NAME, session: this.SESSION, body: reply, action: 'reply'}
@@ -109,13 +113,13 @@ export default class BonjourSignaller extends EventEmitter {
 
   // this gets sent over the wire by express.
   sendReply(ws, reply) {
-    console.log("sendReply()", ws, reply)
+    console.log("sendReply()")
     ws.send(JSON.stringify(reply))
   }
 
   // request receives this in response to the above.
   hearReply(reply) {
-    console.log("hearReply()", reply)
+    console.log("hearReply(): from", reply.name, "/", reply.session)
     this.emit('reply', reply, reply.body, null)
   }
 }

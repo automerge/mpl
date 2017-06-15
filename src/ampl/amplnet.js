@@ -39,8 +39,8 @@ export default class aMPLNet extends EventEmitter {
         bot = bs.init({doc_id: this.doc_id, name: this.name, session: this.peer_id })
       }
 
-      this.peergroup.on('peer', (peer) => {
-        console.log("ON PEER",peer.id)
+      this.peergroup.on('peer', (peer,webrtc) => {
+        console.log("ON PEER",peer.id,peer.self)
         this.seqs[peer.id] = 0
         if (peer.self == true) { this.SELF = peer }
         this.peers[peer.id] = {
@@ -50,6 +50,7 @@ export default class aMPLNet extends EventEmitter {
           lastActivity: Date.now(),
           messagesSent: 0,
           messagesReceived: 0
+          webrtc: webrtc
         }
         this.emit('peer')
 
@@ -65,7 +66,6 @@ export default class aMPLNet extends EventEmitter {
         })
 
         peer.on('connect', () => {
-          console.log("ON PEER CONNECT",peer.id)
           this.peers[peer.id].connected = true
           this.peers[peer.id].lastActivity = Date.now()
           this.peers[peer.id].messagesSent += 1
@@ -114,7 +114,6 @@ export default class aMPLNet extends EventEmitter {
     if (m.action) {
       if (m.to == this.SELF.id) {
         // its for me - process it
-        console.log("GOT SIGNAL", m)
         this.peergroup.processSignal(m, m.body , (reply) => {
           if (m.action == "offer") {
             let replyMsg = {
@@ -123,18 +122,16 @@ export default class aMPLNet extends EventEmitter {
               session: this.SELF.id,
               doc_id:  this.doc_id,
               to:      m.session,
-              body:    reply
+              body:    reply,
+              webrtc:  true
             }
-            console.log("SEND REPLY", m)
             peer.send(replyMsg)
           }
         })
       } else {
         // its not for me - forward it on
-        console.log("SIGNAL: ROUTE TO",m.to)
         this.peergroup.peers().forEach((p) => {
           if (p.id == m.to) {
-            console.log("SENDING")
             p.send(m)
           }
         })
@@ -159,16 +156,13 @@ export default class aMPLNet extends EventEmitter {
     let ids = Object.keys(knownPeers)
     for (let i in ids) {
       let remotePeerId = ids[i]
-      console.log("Considering peer", remotePeerId)
       if (!(remotePeerId in this.peers) && knownPeers[remotePeerId].connected && remotePeerId < this.SELF.id) {
         // fake a hello message
-        console.log("Hello", remotePeerId)
-        let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name}
+        let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name, webrtc: true}
         // process the hello message to get the offer material
         this.peergroup.processSignal(msg, undefined, (offer) => {
-          console.log("SEND OFFER", remotePeerId)
           // send the exact same offer through the system
-          let offerMsg = { action: "offer", name: this.SELF.name, session:this.SELF.id, doc_id:this.doc_id, to:remotePeerId, body:offer}
+          let offerMsg = { action: "offer", name: this.SELF.name, session:this.SELF.id, doc_id:this.doc_id, to:remotePeerId, body:offer, webrtc:true }
           peer.send(offerMsg)
         })
       }

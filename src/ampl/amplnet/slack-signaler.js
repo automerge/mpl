@@ -27,12 +27,14 @@ function init(config) {
 
   // The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload
   rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
+    if (connected) { // race condition
       onConnectHandler()
       HANDLERS['connect']()
       for (const c of rtmStartData.channels) {
         if (c.is_member && c.name ==='signals') { CHANNEL = c.id }
       }
       console.log(`Logged in as ${rtmStartData.self.name} of team ${rtmStartData.team.name}`);
+    }
   });
 
   // you need to wait for the client to fully connect before you can send messages
@@ -73,10 +75,12 @@ function init(config) {
             return
           }
           if (msg.action == "hello") { // "hello" doesn't have a msg.body, so pass undefined
-            HANDLERS['hello'](msg, undefined, (reply) => {
-                let msgJSON = JSON.stringify({ action: "offer", name: NAME, session:SESSION, doc_id:DOC_ID, to:msg.session, body:reply})
-                rtm.sendMessage(msgJSON, CHANNEL);
-            })
+            setTimeout(() => {
+              HANDLERS['hello'](msg, undefined, (reply) => {
+                  let msgJSON = JSON.stringify({ action: "offer", name: NAME, session:SESSION, doc_id:DOC_ID, to:msg.session, body:reply})
+                  rtm.sendMessage(msgJSON, CHANNEL);
+              })
+            },500)
           }
           if (msg.action == "offer" && msg.to == SESSION) {
             HANDLERS['offer'](msg, msg.body, (reply) => {

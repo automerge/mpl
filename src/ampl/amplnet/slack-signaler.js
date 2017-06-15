@@ -80,7 +80,7 @@ function init(config) {
                   let msgJSON = JSON.stringify({ action: "offer", name: NAME, session:SESSION, doc_id:DOC_ID, to:msg.session, body:reply})
                   rtm.sendMessage(msgJSON, CHANNEL);
               })
-            },500)
+            },Math.floor(Math.random()*1000))
           }
           if (msg.action == "offer" && msg.to == SESSION) {
             HANDLERS['offer'](msg, msg.body, (reply) => {

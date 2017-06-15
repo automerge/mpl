@@ -51,7 +51,7 @@ export default class Store {
     if(action.type === "NEW_DOCUMENT" || action.type === "OPEN_DOCUMENT") {
       if(this.network) this.network.disconnect()
 
-      let network = new aMPLNet()
+      let network = new aMPLNet(this.options.network)
       network.connect({
         peerId: this.state._state.get("_id"),
         docId: this.state.docId,
@@ -61,7 +61,7 @@ export default class Store {
       this.network = network
     }
 
-    this.network.broadcast(newState, action.type)
+    this.network.broadcastState(newState, action.type)
     this.listeners.forEach((listener) => listener())
   }
 

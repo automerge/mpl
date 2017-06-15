@@ -20,8 +20,12 @@ export default class Peer extends EventEmitter {
       }
     }
     // byowebrtc <- this is for node and could undoubtedly be better handled
-    else if (options && options.wrtc) {
-      this.wrtc = options.wrtc
+    else if (options) {
+      if (options.wrtc) {
+        this.wrtc = options.wrtc
+      } else {
+        throw "options.wrtc needs to be set in headless mode"
+      }
     }
     
     this.WebRTCConfig = {

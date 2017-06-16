@@ -16,7 +16,7 @@ let store = new ampl.default.Store(
 
 store.dispatch({ type: "OPEN_DOCUMENT", docId: "botcounter" })
 
-store.network.signaler.hearHello(process.env.REMOTENAME, process.env.REMOTESESSION, process.env.REMOTEHOST, process.env.REMOTEPORT)
+store.network.signaler.manualHello(process.env.REMOTEHOST, process.env.REMOTEPORT)
 
 setInterval( () => store.dispatch({ type: "INCREMENT_COUNTER", docId: "botcounter" }), 5000)
 store.getState()

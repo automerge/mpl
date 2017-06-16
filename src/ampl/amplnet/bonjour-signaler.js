@@ -13,27 +13,43 @@ export default class BonjourSignaller extends EventEmitter {
     this.NAME = config.name || "unknown"
     this.DOC_ID = config.doc_id;
 
-    this.PORT = 3000 + Math.floor(Math.random() * 1000);
+    this.PORT = process.env.PORT || 3000 + Math.floor(Math.random() * 1000);
 
     // backwards compat: todo
     this.session = this.SESSION
     this.name = this.NAME
   }
 
-  start() { this.sendHello(); this.emit('connect') }
-  stop() { this.sendGoodbye(); this.emit('disconnect') } // XXX fix this: i haven't implemented unpublish
+  start() { 
+    this.sendHello()
+    this.emit('connect')
+  }
+  
+  stop() { 
+    this.sendGoodbye() 
+    this.emit('disconnect') 
+  }
 
   prepareSignalServer() {
     console.log("prepareSignalServer: listening on ", this.PORT)
-    const wss = new WebSocket.Server({ port: this.PORT });
+    this.wss = new WebSocket.Server({ port: this.PORT });
 
-    wss.on('connection', (ws) => {
+    this.wss.on('connection', (ws) => {
       ws.on('message', (raw) => {
         console.log('received: %s', raw);
         var signal = JSON.parse(raw)
-        this.hearOffer(ws, signal);
+        if (signal.action == 'hello') {
+          this.greet(ws, signal)
+        }
+        else if (signal.action == 'offer') {
+          this.hearOffer(ws, signal);
+        }
       });
     });
+  }
+
+  greet(ws, signal) {
+    ws.send(JSON.stringify({action: 'greet', session: this.SESSION, name: this.NAME}))
   }
 
   searchBonjour() {
@@ -63,6 +79,24 @@ export default class BonjourSignaller extends EventEmitter {
     this.service = bonjour.publish(publish)
   }
 
+  manualHello(host, port) {
+    console.log("sendOffer():", host+":"+port )
+    let msg = {name: this.NAME, session: this.SESSION, action: 'hello'}
+    
+    // This is creating a pile of websockets but to do this right I need to 
+    // queue up messages that arrive here until we have an 'open' websocket and then send them.
+    let ws = new WebSocket("ws://"+host+":"+port+"/");
+    ws.on('open', () => {
+      ws.send(JSON.stringify(msg));
+    });
+
+    ws.on('message', (data) => {
+      console.log(data)
+      let greeting = JSON.parse(data)
+      this.hearHello(greeting.name, greeting.session, host, port)
+    });
+  }
+
   // initiated by .start()
   sendHello() {
     console.log("sendHello()")
@@ -74,6 +108,10 @@ export default class BonjourSignaller extends EventEmitter {
   }
 
   sendGoodbye() {
+    if(this.wss) {
+      // NB for future debuggers: the server will stay running until all cxns close too
+      this.wss.close(); 
+    }
     if(this.browser) this.browser.stop();
     if(this.service) this.service.stop();
   }

@@ -48,7 +48,9 @@ export default class Store {
 
     this.state = newState
 
-    if(action.type === "NEW_DOCUMENT" || action.type === "OPEN_DOCUMENT") {
+    if(action.type === "NEW_DOCUMENT" 
+        || action.type === "OPEN_DOCUMENT"
+        || action.type === "FORK_DOCUMENT") {
       if(this.network) this.network.disconnect()
 
       let network = new aMPLNet(this.options.network)
@@ -82,7 +84,7 @@ export default class Store {
   }
 
   forkDocument(state, action) {
-    return Tesseract.changeset(state, "fork document", (doc) => {
+    return Tesseract.changeset(state, { action: action }, (doc) => {
       doc.docId = uuidv4()
     })
   }
@@ -94,7 +96,7 @@ export default class Store {
       tesseract = Tesseract.load(action.file)
     else if(action.docId) {
       tesseract = Tesseract.init()
-      tesseract = Tesseract.changeset(tesseract, "open document", (doc) => {
+      tesseract = Tesseract.changeset(tesseract, { action: action }, (doc) => {
         doc.docId = action.docId
       })
     }

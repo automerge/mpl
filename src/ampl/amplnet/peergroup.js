@@ -65,7 +65,7 @@ export default class PeerGroup extends EventEmitter {
     return values
   }
 
-  getOrCreatePeer(id, name, webrtc, handler) {
+  getOrCreatePeer(id, name, handler) {
     if(!this.Peers[id]) {
       let peer = new Peer(this.options, id, name, handler)
       // pvh moved this here from peer.js but doesn't understand it
@@ -81,30 +81,29 @@ export default class PeerGroup extends EventEmitter {
     return this.Peers[id]
   }
 
-  beginHandshake(id, name, webrtc, handler) {
+  beginHandshake(id, name, handler) {
     delete this.Handshakes[id] // we're moving now, so discard this handshake
 
     // this delete gives us the old semantics but i don't know why we do it
     delete this.Peers[id]
-    let peer = this.getOrCreatePeer(id, name, webrtc, handler);
+    let peer = this.getOrCreatePeer(id, name, handler);
     peer.establishDataChannel();
   }
 
   processSignal(msg, signal, handler) {
     let id = msg.session
     let name = msg.name
-    let webrtc = !!msg.webrtc
-
+    
     if (msg.action == "hello") {
       if (id in this.Peers) {
         // we save a handshake for later if we already know them
-        this.Handshakes[id] = () => { this.beginHandshake(id,name,webrtc,handler) }
+        this.Handshakes[id] = () => { this.beginHandshake(id,name,handler) }
       } else {
-        this.beginHandshake(id,name,webrtc,handler)
+        this.beginHandshake(id,name,handler)
       }
     }
     else {
-      let peer = this.getOrCreatePeer(id,name,webrtc,handler)
+      let peer = this.getOrCreatePeer(id,name,handler)
       peer.handleSignal(signal)
     }
   }

@@ -38,7 +38,7 @@ export default class aMPLNet extends EventEmitter {
         this.signaler = new BonjourSignaler({doc_id: this.doc_id, name: this.name, session: this.peer_id })
       }
 
-      this.peergroup.on('peer', (peer,webrtc) => {
+      this.peergroup.on('peer', (peer) => {
         console.log("ON PEER",peer.id,peer.self)
         this.seqs[peer.id] = 0
         if (peer.self == true) { this.SELF = peer }
@@ -48,8 +48,7 @@ export default class aMPLNet extends EventEmitter {
           name: peer.name,
           lastActivity: Date.now(),
           messagesSent: 0,
-          messagesReceived: 0,
-          webrtc: webrtc
+          messagesReceived: 0
         }
         this.emit('peer')
 
@@ -121,8 +120,7 @@ export default class aMPLNet extends EventEmitter {
               session: this.SELF.id,
               doc_id:  this.doc_id,
               to:      m.session,
-              body:    reply,
-              webrtc:  true
+              body:    reply
             }
             peer.send(replyMsg)
           }
@@ -157,11 +155,11 @@ export default class aMPLNet extends EventEmitter {
       let remotePeerId = ids[i]
       if (!(remotePeerId in this.peerStats) && knownPeers[remotePeerId].connected && remotePeerId < this.SELF.id) {
         // fake a hello message
-        let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name, webrtc: true}
+        let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name}
         // process the hello message to get the offer material
         this.peergroup.processSignal(msg, undefined, (offer) => {
           // send the exact same offer through the system
-          let offerMsg = { action: "offer", name: this.SELF.name, session:this.SELF.id, doc_id:this.doc_id, to:remotePeerId, body:offer, webrtc:true }
+          let offerMsg = { action: "offer", name: this.SELF.name, session:this.SELF.id, doc_id:this.doc_id, to:remotePeerId, body:offer }
           peer.send(offerMsg)
         })
       }

@@ -20,7 +20,7 @@ export default class aMPLNet extends EventEmitter {
   connect(config) {
     if (this.connected) throw "network already connected - disconnect first"
     this.config = config || this.config
-    this.peers  = {}
+    this.peerStats  = {}
     this.clocks = {}
     this.seqs = {}
     
@@ -42,7 +42,7 @@ export default class aMPLNet extends EventEmitter {
         console.log("ON PEER",peer.id,peer.self)
         this.seqs[peer.id] = 0
         if (peer.self == true) { this.SELF = peer }
-        this.peers[peer.id] = {
+        this.peerStats[peer.id] = {
           connected: false,
           self: peer.self,
           name: peer.name,
@@ -54,20 +54,20 @@ export default class aMPLNet extends EventEmitter {
         this.emit('peer')
 
         peer.on('disconnect', () => {
-          this.peers[peer.id].connected = false
+          this.peerStats[peer.id].connected = false
           this.broadcastKnownPeers()
           this.emit('peer')
         })
 
         peer.on('closed', () => {
-          delete this.peers[peer.id]
+          delete this.peerStats[peer.id]
           this.emit('peer')
         })
 
         peer.on('connect', () => {
-          this.peers[peer.id].connected = true
-          this.peers[peer.id].lastActivity = Date.now()
-          this.peers[peer.id].messagesSent += 1
+          this.peerStats[peer.id].connected = true
+          this.peerStats[peer.id].lastActivity = Date.now()
+          this.peerStats[peer.id].messagesSent += 1
           this.emit('peer')
           if (peer.self == false) {
             peer.send({vectorClock: Tesseract.getVClock(this.store.getState()), seq:0})
@@ -95,8 +95,8 @@ export default class aMPLNet extends EventEmitter {
           if (m.vectorClock && (m.deltas || m.seq == this.seqs[peer.id])) { // ignore acks for all but the last send
             this.updatePeer(peer,this.store.getState(), m.vectorClock)
           }
-          this.peers[peer.id].lastActivity = Date.now()
-          this.peers[peer.id].messagesReceived += 1
+          this.peerStats[peer.id].lastActivity = Date.now()
+          this.peerStats[peer.id].messagesReceived += 1
           this.emit('peer')
         })
 
@@ -155,7 +155,7 @@ export default class aMPLNet extends EventEmitter {
     let ids = Object.keys(knownPeers)
     for (let i in ids) {
       let remotePeerId = ids[i]
-      if (!(remotePeerId in this.peers) && knownPeers[remotePeerId].connected && remotePeerId < this.SELF.id) {
+      if (!(remotePeerId in this.peerStats) && knownPeers[remotePeerId].connected && remotePeerId < this.SELF.id) {
         // fake a hello message
         let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name, webrtc: true}
         // process the hello message to get the offer material
@@ -170,8 +170,8 @@ export default class aMPLNet extends EventEmitter {
 
   broadcastKnownPeers() {
     this.peergroup.peers().forEach((peer) => {
-      console.log("Broadcasting known peers to " + peer.id, Object.keys(this.peers))
-      peer.send({knownPeers: this.peers })
+      console.log("Broadcasting known peers to " + peer.id, Object.keys(this.peerStats))
+      peer.send({knownPeers: this.peerStats })
     })
   }
 
@@ -182,7 +182,7 @@ export default class aMPLNet extends EventEmitter {
       this.peergroup.peers().forEach((peer) => {
         try {
           peer.send({vectorClock: clock })
-          this.peers[peer.id].messagesSent += 1
+          this.peerStats[peer.id].messagesSent += 1
         }
         catch (e) {
           console.log("Error sending to ["+peer.id+"]:", e)
@@ -205,7 +205,7 @@ export default class aMPLNet extends EventEmitter {
     let deltas = Tesseract.getDeltasAfter(state, clock)
     if (deltas.length > 0) {
       peer.send({deltas: deltas, seq: this.seqs[peer.id], vectorClock: myClock})
-      this.peers[peer.id].messagesSent += 1
+      this.peerStats[peer.id].messagesSent += 1
     }
   }
 

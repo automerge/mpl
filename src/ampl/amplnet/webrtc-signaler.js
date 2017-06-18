@@ -2,7 +2,7 @@ import EventEmitter from 'events'
 
 // Listen to peergroup, and when it adds a peer, listen to that peer
 // so that we can tell others about it when it connects / disconnects.
-class WebRTCSignaler {
+export default class WebRTCSignaler {
   // todo: should this have the peergroup or should the peergroup listen to it?
   constructor(peergroup) {
     peergroup.on('peer', (peer) => {
@@ -84,7 +84,7 @@ class WebRTCSignaler {
     })
   }
 
-  // When we get a signal, send it to everyone else unless it's for us, in which case process it.
+  // When we get a signal, forward it to the peer we know who wants it unless it's for us, in which case process it.
   routeSignal(peer, m) {
     if (m.to == this.SELF.id) {
       this.handleSignal(peer, m)

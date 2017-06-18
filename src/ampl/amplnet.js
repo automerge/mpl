@@ -1,5 +1,6 @@
 import ss from './amplnet/slack-signaler'
 import BonjourSignaler from './amplnet/bonjour-signaler'
+import WebRTCSignaler from './amplnet/webrtc-signaler' // this has a different and also crazy interface
 
 import PeerGroup from './amplnet/peergroup'
 import Tesseract from 'tesseract'
@@ -38,10 +39,12 @@ export default class aMPLNet extends EventEmitter {
         this.signaler = new BonjourSignaler({doc_id: this.doc_id, name: this.name, session: this.peer_id })
       }
 
+      this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
+
       this.peergroup.on('peer', (peer) => {
         console.log("ON PEER",peer.id,peer.self)
         this.seqs[peer.id] = 0
-        if (peer.self == true) { this.SELF = peer }
+        
         this.peerStats[peer.id] = {
           connected: false,
           self: peer.self,
@@ -54,7 +57,6 @@ export default class aMPLNet extends EventEmitter {
 
         peer.on('disconnect', () => {
           this.peerStats[peer.id].connected = false
-          this.broadcastKnownPeers()
           this.emit('peer')
         })
 
@@ -68,21 +70,24 @@ export default class aMPLNet extends EventEmitter {
           this.peerStats[peer.id].lastActivity = Date.now()
           this.peerStats[peer.id].messagesSent += 1
           this.emit('peer')
+        })
+
+        peer.on('message', (m) => {
+          this.peerStats[peer.id].lastActivity = Date.now()
+          this.peerStats[peer.id].messagesReceived += 1
+          this.emit('peer')
+        })
+
+        // END PEER STATS
+
+        peer.on('connect', () => {
           if (peer.self == false) {
             peer.send({vectorClock: Tesseract.getVClock(this.store.getState()), seq:0})
           }
-          this.broadcastKnownPeers()
         })
 
         peer.on('message', (m) => {
           let store = this.store
-
-          this.routeSignal(peer,m)
-
-          if (m.knownPeers) {
-//            this.peersOfPeers[peer.id] = m.knownPeers
-            this.locatePeersThroughFriends(peer, m.knownPeers)
-          }
 
           if (m.deltas && m.deltas.length > 0) {
             this.store.dispatch({
@@ -94,45 +99,13 @@ export default class aMPLNet extends EventEmitter {
           if (m.vectorClock && (m.deltas || m.seq == this.seqs[peer.id])) { // ignore acks for all but the last send
             this.updatePeer(peer,this.store.getState(), m.vectorClock)
           }
-          this.peerStats[peer.id].lastActivity = Date.now()
-          this.peerStats[peer.id].messagesReceived += 1
-          this.emit('peer')
         })
-
       })
 
       this.peergroup.join(this.signaler)
     } else {
       console.log("Network disabled")
       console.log("TRELLIS_DOC_ID:", this.doc_id)
-    }
-  }
-
-  routeSignal(peer, m) {
-    if (m.action) {
-      if (m.to == this.SELF.id) {
-        // its for me - process it
-        this.peergroup.processSignal(m, m.body , (reply) => {
-          if (m.action == "offer") {
-            let replyMsg = {
-              action:  "reply",
-              name:    this.SELF.name,
-              session: this.SELF.id,
-              doc_id:  this.doc_id,
-              to:      m.session,
-              body:    reply
-            }
-            peer.send(replyMsg)
-          }
-        })
-      } else {
-        // its not for me - forward it on
-        this.peergroup.peers().forEach((p) => {
-          if (p.id == m.to) {
-            p.send(m)
-          }
-        })
-      }
     }
   }
 
@@ -148,34 +121,9 @@ export default class aMPLNet extends EventEmitter {
     return maxclock
   }
 
-
-  locatePeersThroughFriends(peer, knownPeers) {
-    let ids = Object.keys(knownPeers)
-    for (let i in ids) {
-      let remotePeerId = ids[i]
-      if (!(remotePeerId in this.peerStats) && knownPeers[remotePeerId].connected && remotePeerId < this.SELF.id) {
-        // fake a hello message
-        let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name}
-        // process the hello message to get the offer material
-        this.peergroup.processSignal(msg, undefined, (offer) => {
-          // send the exact same offer through the system
-          let offerMsg = { action: "offer", name: this.SELF.name, session:this.SELF.id, doc_id:this.doc_id, to:remotePeerId, body:offer }
-          peer.send(offerMsg)
-        })
-      }
-    }
-  }
-
-  broadcastKnownPeers() {
-    this.peergroup.peers().forEach((peer) => {
-      console.log("Broadcasting known peers to " + peer.id, Object.keys(this.peerStats))
-      peer.send({knownPeers: this.peerStats })
-    })
-  }
-
   broadcastState(state, action) {
     let clock = Tesseract.getVClock(state)
-    this.clocks[this.SELF.id] = clock
+    this.clocks[this.peergroup.self().id] = clock
     if (action == "APPLY_DELTAS") {
       this.peergroup.peers().forEach((peer) => {
         try {

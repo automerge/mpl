@@ -26,15 +26,15 @@ export default class PeerGroup extends EventEmitter {
     })
 
     // add ourselves to the peers list with a do-nothing signaller
-    let me = this.getOrCreatePeer(signaler.session, signaler.name, false, undefined)
+    this.me = this.getOrCreatePeer(signaler.session, signaler.name, undefined)
 
     // we define "connect" and "disconnect" for ourselves as whether
     // we're connected to the signaller.
     signaler.on('connect', () => {
-      me.emit('connect')
+      this.me.emit('connect')
     })
     signaler.on('disconnect', () => {
-      me.emit('disconnect')
+      this.me.emit('disconnect')
     })
 
     // notify the signaller we're ready to connect.
@@ -56,13 +56,11 @@ export default class PeerGroup extends EventEmitter {
   }
 
   peers() {
-    let values = []
+    return Object.values(this.Peers)
+  }
 
-    Object.keys(this.Peers).forEach((key) => {
-      values.push(this.Peers[key])
-    })
-
-    return values
+  self() {
+    return this.me
   }
 
   getOrCreatePeer(id, name, handler) {

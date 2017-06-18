@@ -24,14 +24,13 @@ export default class aMPLNet extends EventEmitter {
     this.seqs = {}
     
     this.peer_id = this.config.peerId
-    this.doc_id = this.config.docId
     this.store  = this.config.store
 
     this.connected = true
 
-    this.signaler = new BonjourSignaler({doc_id: this.doc_id, name: this.name, session: this.peer_id })
+    this.signaler = new BonjourSignaler({name: this.name, session: this.peer_id })
   
-    this.webRTCSignaler = new WebRTCSignaler(this.peergroup, this.doc_id)
+    this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
 
     this.peergroup.on('peer', (peer) => {
       console.log("ON PEER",peer.id,peer.self)
@@ -81,6 +80,10 @@ export default class aMPLNet extends EventEmitter {
       peer.on('message', (m) => {
         let store = this.store
 
+        if (m.docId != this.store.getState().docId) {
+          return
+        }
+
         if (m.deltas && m.deltas.length > 0) {
           this.store.dispatch({
             type: "APPLY_DELTAS",
@@ -89,7 +92,7 @@ export default class aMPLNet extends EventEmitter {
         }
 
         if (m.vectorClock && (m.deltas || m.seq == this.seqs[peer.id])) { // ignore acks for all but the last send
-          this.updatePeer(peer,this.store.getState(), m.vectorClock)
+          this.updatePeer(peer, this.store.getState(), m.vectorClock)
         }
       })
     })
@@ -115,7 +118,8 @@ export default class aMPLNet extends EventEmitter {
     if (action == "APPLY_DELTAS") {
       this.peergroup.peers().forEach((peer) => {
         try {
-          peer.send({vectorClock: clock })
+          // docId probably shouldn't be here, but here it is for now.
+          peer.send({docId: state.docId, vectorClock: clock })
           this.peerStats[peer.id].messagesSent += 1
         }
         catch (e) {
@@ -138,7 +142,8 @@ export default class aMPLNet extends EventEmitter {
     this.seqs[peer.id] += 1
     let deltas = Tesseract.getDeltasAfter(state, clock)
     if (deltas.length > 0) {
-      peer.send({deltas: deltas, seq: this.seqs[peer.id], vectorClock: myClock})
+      // docId probably shouldn't be here, but here it is for now.
+      peer.send({docId: state.docId, deltas: deltas, seq: this.seqs[peer.id], vectorClock: myClock})
       this.peerStats[peer.id].messagesSent += 1
     }
   }

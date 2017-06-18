@@ -11,7 +11,6 @@ export default class BonjourSignaller extends EventEmitter {
 
     this.SESSION = config.session || uuidv4()
     this.NAME = config.name || "unknown"
-    this.DOC_ID = config.doc_id;
 
     this.PORT = process.env.PORT || 3000 + Math.floor(Math.random() * 1000);
 
@@ -62,10 +61,6 @@ export default class BonjourSignaller extends EventEmitter {
           console.log("peerDiscovery(): Own session.")
           return
         }
-        if (meta.docid != this.DOC_ID) {
-          console.log("peerDiscovery(): Wrong docid. (Saw: "+meta.docid+", want: " + this.DOC_ID+")")
-          return
-        }
         this.hearHello(service.txt.name, service.txt.session, service.host, service.port)
     })
   }
@@ -73,7 +68,7 @@ export default class BonjourSignaller extends EventEmitter {
   publishBonjour() {
     // text is encoded into a k/v object by bonjour
     // bonjour downcases keynames.
-    let text = {session: this.SESSION, name: this.NAME, docid:this.DOC_ID}
+    let text = {session: this.SESSION, name: this.NAME}
     let publish = { name: 'ampl-'+ this.SESSION, type: 'ampl', port: this.PORT, txt: text };
     console.log("publishBonjour():",  'ampl-'+ this.SESSION, "type:", 'ampl', "port:", this.PORT, "txt:", JSON.stringify(text).split('\n').join(' '))
     this.service = bonjour.publish(publish)

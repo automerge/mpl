@@ -4,9 +4,7 @@ import EventEmitter from 'events'
 // so that we can tell others about it when it connects / disconnects.
 export default class WebRTCSignaler {
   // todo: should this have the peergroup or should the peergroup listen to it?
-  constructor(peergroup, doc_id) {
-    // XXX get rid of this
-    this.doc_id = doc_id
+  constructor(peergroup) {
     peergroup.on('peer', (peer) => {
       peer.on('connect', () => {
         this.broadcastKnownPeers()
@@ -58,7 +56,7 @@ export default class WebRTCSignaler {
         // process the hello message to get the offer material
         this.peergroup.processSignal(msg, undefined, (offer) => {
           // send the exact same offer through the system
-          let offerMsg = { action: "offer", name: me.name, session: me.id, doc_id: this.doc_id, to:remotePeerId, body:offer }
+          let offerMsg = { action: "offer", name: me.name, session: me.id, to:remotePeerId, body:offer }
           peer.send(offerMsg)
         })
       }
@@ -74,7 +72,6 @@ export default class WebRTCSignaler {
           action:  "reply",
           name:    me.name,
           session: me.id,
-          doc_id:  this.doc_id,
           to:      m.session,
           body:    reply
         }

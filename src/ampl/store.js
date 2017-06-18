@@ -15,7 +15,6 @@ export default class Store {
     let network = new aMPLNet(this.options.network)
     network.connect({
       peerId: this.state._state.get("_id"),
-      docId: this.state.docId,
       store: this
     })
 
@@ -56,7 +55,6 @@ export default class Store {
       let network = new aMPLNet(this.options.network)
       network.connect({
         peerId: this.state._state.get("_id"),
-        docId: this.state.docId,
         store: this
       })
 

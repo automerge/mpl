@@ -39,7 +39,7 @@ export default class aMPLNet extends EventEmitter {
         this.signaler = new BonjourSignaler({doc_id: this.doc_id, name: this.name, session: this.peer_id })
       }
 
-      this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
+      this.webRTCSignaler = new WebRTCSignaler(this.peergroup, this.doc_id)
 
       this.peergroup.on('peer', (peer) => {
         console.log("ON PEER",peer.id,peer.self)

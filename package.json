@@ -15,7 +15,6 @@
     ]
   },
   "dependencies": {
-    "@slack/client": "^3.10.0",
     "body-parser": "^1.17.2",
     "bonjour": "^3.5.0",
     "debug": "^2.6.8",

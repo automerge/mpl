@@ -85,18 +85,6 @@ describe("getHistory()", function() {
   })
 })
 
-describe("Config", function() {
-  it("sets a shared configuration", function() {
-    aMPL.config.slackBotToken = "PVH's Token"
-
-    let store = createStore()
-
-    assert.equal(aMPL.config.slackBotToken, store.network.token)
-
-    aMPL.config.slackBotToken = undefined
-  })
-})
-
 describe.skip("Network", function() {
   it("synchronizes between two clients", function(done) {
     this.timeout(30000)

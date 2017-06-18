@@ -33,10 +33,6 @@ export default class App extends React.Component {
   constructor() {
     super()
 
-    // Configure our Slack signaler by setting
-    // process.env.SLACK_BOT_TOKEN or ampl.config.slackBotToken
-    aMPL.config.slackBotToken = "some token"
-
     this.store = new aMPL.Store((state, action) => {
       switch(action.type) {
         case "INCREMENT_COUNTER":
@@ -68,8 +64,6 @@ export default class App extends React.Component {
   }
 }
 ```
-
-In the code above, replace `some token` with the Slack token that you obtained by *TODO instructions*.
 
 Start two clients and try incrementing the counter by clicking the button, and you should see the counters synchronize on both clients:
 

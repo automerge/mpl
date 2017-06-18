@@ -1,4 +1,3 @@
-import ss from './amplnet/slack-signaler'
 import BonjourSignaler from './amplnet/bonjour-signaler'
 import WebRTCSignaler from './amplnet/webrtc-signaler' // this has a different and also crazy interface
 
@@ -11,7 +10,6 @@ export default class aMPLNet extends EventEmitter {
   constructor(options) {
     super()
 
-    this.token  = config.slackBotToken || process.env.SLACK_BOT_TOKEN
     this.name   = config.name || process.env.NAME
     this.peergroup = new PeerGroup(options)
     this.connected = false
@@ -31,82 +29,72 @@ export default class aMPLNet extends EventEmitter {
 
     this.connected = true
 
-    if (this.doc_id) {
-      if (process.env.SLACK_BOT_TOKEN) {
-        this.signaler = ss.init({doc_id: this.doc_id, name: this.name, bot_token: this.token, session: this.peer_id })
-      }
-      else {
-        this.signaler = new BonjourSignaler({doc_id: this.doc_id, name: this.name, session: this.peer_id })
-      }
+    this.signaler = new BonjourSignaler({doc_id: this.doc_id, name: this.name, session: this.peer_id })
+  
+    this.webRTCSignaler = new WebRTCSignaler(this.peergroup, this.doc_id)
 
-      this.webRTCSignaler = new WebRTCSignaler(this.peergroup, this.doc_id)
+    this.peergroup.on('peer', (peer) => {
+      console.log("ON PEER",peer.id,peer.self)
+      this.seqs[peer.id] = 0
+      
+      this.peerStats[peer.id] = {
+        connected: false,
+        self: peer.self,
+        name: peer.name,
+        lastActivity: Date.now(),
+        messagesSent: 0,
+        messagesReceived: 0
+      }
+      this.emit('peer')
 
-      this.peergroup.on('peer', (peer) => {
-        console.log("ON PEER",peer.id,peer.self)
-        this.seqs[peer.id] = 0
-        
-        this.peerStats[peer.id] = {
-          connected: false,
-          self: peer.self,
-          name: peer.name,
-          lastActivity: Date.now(),
-          messagesSent: 0,
-          messagesReceived: 0
-        }
+      peer.on('disconnect', () => {
+        this.peerStats[peer.id].connected = false
         this.emit('peer')
-
-        peer.on('disconnect', () => {
-          this.peerStats[peer.id].connected = false
-          this.emit('peer')
-        })
-
-        peer.on('closed', () => {
-          delete this.peerStats[peer.id]
-          this.emit('peer')
-        })
-
-        peer.on('connect', () => {
-          this.peerStats[peer.id].connected = true
-          this.peerStats[peer.id].lastActivity = Date.now()
-          this.peerStats[peer.id].messagesSent += 1
-          this.emit('peer')
-        })
-
-        peer.on('message', (m) => {
-          this.peerStats[peer.id].lastActivity = Date.now()
-          this.peerStats[peer.id].messagesReceived += 1
-          this.emit('peer')
-        })
-
-        // END PEER STATS
-
-        peer.on('connect', () => {
-          if (peer.self == false) {
-            peer.send({vectorClock: Tesseract.getVClock(this.store.getState()), seq:0})
-          }
-        })
-
-        peer.on('message', (m) => {
-          let store = this.store
-
-          if (m.deltas && m.deltas.length > 0) {
-            this.store.dispatch({
-              type: "APPLY_DELTAS",
-              deltas: m.deltas
-            })
-          }
-
-          if (m.vectorClock && (m.deltas || m.seq == this.seqs[peer.id])) { // ignore acks for all but the last send
-            this.updatePeer(peer,this.store.getState(), m.vectorClock)
-          }
-        })
       })
 
-      this.peergroup.join(this.signaler)
-    } else {
-      console.log("Network disabled")
-      console.log("TRELLIS_DOC_ID:", this.doc_id)
-    }
+      peer.on('closed', () => {
+        delete this.peerStats[peer.id]
+        this.emit('peer')
+      })
+
+      peer.on('connect', () => {
+        this.peerStats[peer.id].connected = true
+        this.peerStats[peer.id].lastActivity = Date.now()
+        this.peerStats[peer.id].messagesSent += 1
+        this.emit('peer')
+      })
+
+      peer.on('message', (m) => {
+        this.peerStats[peer.id].lastActivity = Date.now()
+        this.peerStats[peer.id].messagesReceived += 1
+        this.emit('peer')
+      })
+
+      // END PEER STATS
+
+      peer.on('connect', () => {
+        if (peer.self == false) {
+          peer.send({vectorClock: Tesseract.getVClock(this.store.getState()), seq:0})
+        }
+      })
+
+      peer.on('message', (m) => {
+        let store = this.store
+
+        if (m.deltas && m.deltas.length > 0) {
+          this.store.dispatch({
+            type: "APPLY_DELTAS",
+            deltas: m.deltas
+          })
+        }
+
+        if (m.vectorClock && (m.deltas || m.seq == this.seqs[peer.id])) { // ignore acks for all but the last send
+          this.updatePeer(peer,this.store.getState(), m.vectorClock)
+        }
+      })
+    })
+
+    this.peergroup.join(this.signaler)
   }
 
   clockMax(clock1, clock2) {

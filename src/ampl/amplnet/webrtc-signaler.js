@@ -33,20 +33,26 @@ export default class WebRTCSignaler {
   // whenever anyone connects or disconnects we tell everyone everything.
   broadcastKnownPeers() {
     this.peergroup.peers().forEach((peer) => {
-      let connectedPeerIds = this.peergroup.peers().filter( (p) => p.connected ).map( (p) => { peer.id } )
-      console.log("Broadcasting known peers to " + peer.id, connectedPeerIds)
-      peer.send({knownPeers: connectedPeerIds})
+      let connectedPeers = this.peergroup.peers().filter( (p) => p.connected() )
+
+      let knownPeers = {}
+      connectedPeers.forEach( (p) => {
+        knownPeers[p.id] = { name: p.name }
+      })
+
+      console.log("Broadcasting known peers to " + peer.id, knownPeers)
+      peer.send({knownPeers: knownPeers})
     })
   }
 
   locatePeersThroughFriends(peer, knownPeers) {
     let ids = Object.keys(knownPeers)
-    let myIds = this.peergroup.peers()
-    let me = this.peergroup.me()
+    let myIds = this.peergroup.peers().map((p) => p.id )
+    let me = this.peergroup.self()
 
     for (let i in ids) {
       let remotePeerId = ids[i]
-      if (!(remotePeerId in myIds)) {
+      if (!(myIds.includes(remotePeerId))) {
         // fake a hello message
         let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name}
         // process the hello message to get the offer material
@@ -90,7 +96,7 @@ export default class WebRTCSignaler {
 
   // When we get a signal, forward it to the peer we know who wants it unless it's for us, in which case process it.
   routeSignal(peer, m) {
-    if (m.to == this.SELF.id) {
+    if (m.to == this.peergroup.self().id) {
       this.handleSignal(peer, m)
     } else {
       this.forwardSignal(peer, m)

@@ -109,6 +109,10 @@ export default class Peer extends EventEmitter {
     }, e => console.log("error with createOffer",e));
   }
 
+  connected() {
+    return this.data_channel && this.data_channel.readyState == 'open'
+  }
+
   handleSignal(signal) {
     if (signal.sdp) {
       // no callback for answers; but we make one if this is an offer

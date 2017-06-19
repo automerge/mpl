@@ -47,20 +47,6 @@ export default class Store {
 
     this.state = newState
 
-    if(action.type === "NEW_DOCUMENT" 
-        || action.type === "OPEN_DOCUMENT"
-        || action.type === "FORK_DOCUMENT") {
-      if(this.network) this.network.disconnect()
-
-      let network = new aMPLNet(this.options.network)
-      network.connect({
-        peerId: this.state._state.get("_id"),
-        store: this
-      })
-
-      this.network = network
-    }
-
     this.network.broadcastState(newState, action.type)
     this.listeners.forEach((listener) => listener())
   }

@@ -73,7 +73,7 @@ export default class aMPLNet extends EventEmitter {
 
       peer.on('connect', () => {
         if (peer.self == false) {
-          peer.send({vectorClock: Tesseract.getVClock(this.store.getState()), seq:0})
+          peer.send({docId: this.store.getState().docId, vectorClock: Tesseract.getVClock(this.store.getState()), seq:0})
         }
       })
 

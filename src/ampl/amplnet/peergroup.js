@@ -92,12 +92,24 @@ export default class PeerGroup extends EventEmitter {
     let id = msg.session
     let name = msg.name
     
+    // FIXME - this could be cleaner 
     if (msg.action == "hello") {
       if (id in this.Peers) {
         // we save a handshake for later if we already know them
         this.Handshakes[id] = () => { this.beginHandshake(id,name,handler) }
       } else {
         this.beginHandshake(id,name,handler)
+      }
+    }
+    else if (msg.action == "offer") {
+      if (id in this.Peers) {
+        this.Handshakes[id] = () => {
+          let peer = this.getOrCreatePeer(id,name,handler)
+          peer.handleSignal(signal)
+        }
+      } else {
+        let peer = this.getOrCreatePeer(id,name,handler)
+        peer.handleSignal(signal)
       }
     }
     else {

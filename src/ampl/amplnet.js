@@ -10,14 +10,18 @@ export default class aMPLNet extends EventEmitter {
   constructor(options) {
     super()
 
+    // xxx NO REALLY, FIX ME.
+    this.options = options
     this.name   = config.name || process.env.NAME
-    this.peergroup = new PeerGroup(options)
     this.connected = false
   }
 
   connect(config) {
     if (this.connected) throw "network already connected - disconnect first"
     this.config = config || this.config
+
+    this.peergroup = new PeerGroup(this.name, this.config.peerId, this.options)
+
     this.peerStats  = {}
     
     this.peer_id = this.config.peerId
@@ -68,7 +72,17 @@ export default class aMPLNet extends EventEmitter {
       })
     })
 
-    this.peergroup.join(this.signaler)
+    // we define "connect" and "disconnect" for ourselves as whether
+    // we're connected to the signaller.
+    this.signaler.on('connect', () => {
+      this.peergroup.self().emit('connect')
+    })
+    this.signaler.on('disconnect', () => {
+      this.peergroup.self().emit('disconnect')
+    })
+
+    this.peergroup.join()
+    this.signaler.start()
   }
 
   disconnect() {

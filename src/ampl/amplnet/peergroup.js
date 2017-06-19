@@ -3,56 +3,33 @@ import lz4  from 'lz4'
 import EventEmitter from 'events'
 
 export default class PeerGroup extends EventEmitter {
-  constructor(options) {
+  constructor(name, session, options) {
     super()
 
     // XXX cleanup this
     this.options = options;
 
-    this.Signaler     = undefined
+    this.session = session;
+    this.name = name;
+
     this.Peers        = {}
     this.Handshakes   = {}
     this.processSignal = this.processSignal.bind(this)
   }
 
-  join(signaler) {
-    this.Signaler = signaler
-    signaler.on('hello', this.processSignal)
-    signaler.on('offer', this.processSignal)
-    signaler.on('reply', this.processSignal)
-    signaler.on('error', (message,e) => {
-      console.log("SIGNALER ERROR-MESSAGE",message)
-      console.log("ERROR",e)
-    })
-
+  join() {
     // add ourselves to the peers list with a do-nothing signaller
-    this.me = this.getOrCreatePeer(signaler.session, signaler.name, undefined)
-
-    // we define "connect" and "disconnect" for ourselves as whether
-    // we're connected to the signaller.
-    signaler.on('connect', () => {
-      this.me.emit('connect')
-    })
-    signaler.on('disconnect', () => {
-      this.me.emit('disconnect')
-    })
-
-    // notify the signaller we're ready to connect.
-    signaler.start()
+    this.me = this.getOrCreatePeer(this.session, this.name, undefined)
   }
 
   close() {
-    if(this.Signaler) {
-      this.Signaler.stop()
-      this.Signaler = undefined
-      for (let id in this.Peers) {
-        this.Peers[id].close()
-        delete this.Peers[id]
-      }
-      // throw away all cached handshakes
-      this.Handshakes = {}
-      this.removeAllListeners()
+    for (let id in this.Peers) {
+      this.Peers[id].close()
+      delete this.Peers[id]
     }
+    // throw away all cached handshakes
+    this.Handshakes = {}
+    this.removeAllListeners()
   }
 
   peers() {

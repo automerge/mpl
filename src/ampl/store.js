@@ -3,6 +3,7 @@ import fs from 'fs'
 import uuidv4 from 'uuid/v4'
 
 import aMPLNet from './amplnet'
+import DeltaRouter from './amplnet/delta-router'
 
 export default class Store {
   constructor(reducer, options) {
@@ -47,7 +48,14 @@ export default class Store {
 
     this.state = newState
 
-    this.network.deltaRouter.broadcastState(newState, action.type)
+    if(!this.deltaRouter
+        || action.type === "NEW_DOCUMENT"
+        || action.type === "OPEN_DOCUMENT"
+        || action.type === "FORK_DOCUMENT") {
+          this.deltaRouter = new DeltaRouter(this.network.peergroup, this)
+    }
+
+    this.deltaRouter.broadcastState(newState, action.type)
     this.listeners.forEach((listener) => listener())
   }
 

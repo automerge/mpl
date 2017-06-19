@@ -1,6 +1,5 @@
 import BonjourSignaler from './amplnet/bonjour-signaler'
 import WebRTCSignaler from './amplnet/webrtc-signaler' // this has a different and also crazy interface
-import DeltaRouter from './amplnet/delta-router'
 
 import PeerGroup from './amplnet/peergroup'
 import EventEmitter from 'events'
@@ -22,15 +21,11 @@ export default class aMPLNet extends EventEmitter {
     this.peerStats  = {}
     
     this.peer_id = this.config.peerId
-    this.store  = this.config.store
 
     this.connected = true
 
     this.signaler = new BonjourSignaler({name: this.name, session: this.peer_id })
-  
     this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
-
-    this.deltaRouter = new DeltaRouter(this.peergroup, this.store)
 
     this.peergroup.on('peer', (peer) => {
       console.log("ON PEER",peer.id,peer.self)
@@ -79,7 +74,6 @@ export default class aMPLNet extends EventEmitter {
   disconnect() {
     if (this.connected == false) throw "network already disconnected - connect first"
     console.log("NETWORK DISCONNECT")
-    delete this.store
     this.peergroup.close()
     this.connected = false
     this.emit('peer')

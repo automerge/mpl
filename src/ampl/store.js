@@ -15,7 +15,9 @@ export default class Store {
 
     let network = new aMPLNet(this.options.network)
     network.connect({
-      peerId: this.state._state.get("actorId"), // use our tesseract session ID as the peer id
+      // we use our tesseract session ID as the peer id, 
+      // but we probably want to use the network ID for the document actorIds
+      peerId: this.state._state.get("actorId"), 
       store: this
     })
 
@@ -52,6 +54,7 @@ export default class Store {
         || action.type === "NEW_DOCUMENT"
         || action.type === "OPEN_DOCUMENT"
         || action.type === "FORK_DOCUMENT") {
+          // the deltaRouter we have right now is per-document, so we need to reinitialize it for each new document.
           this.deltaRouter = new DeltaRouter(this.network.peergroup, this)
     }
 

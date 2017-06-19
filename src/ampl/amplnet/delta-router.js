@@ -74,6 +74,7 @@ export default class DeltaRouter {
     }
   }
 
+  /* This should probably be a feature of Tesseract */
   clockMax(clock1, clock2) {
     let maxclock  = {}
     let keys      = Object.keys(clock1).concat(Object.keys(clock2))

@@ -5,8 +5,9 @@ let request = require('request')
 let uuidv4 = require('uuid/v4');
 
 import EventEmitter from 'events'
+
 export default class BonjourSignaller extends EventEmitter {
-  constructor(config) {
+  constructor(peergroup, config) {
     super()
 
     this.SESSION = config.session || uuidv4()
@@ -17,10 +18,12 @@ export default class BonjourSignaller extends EventEmitter {
     // backwards compat: todo
     this.session = this.SESSION
     this.name = this.NAME
+
+    this.peergroup = peergroup;
   }
 
   start() { 
-    this.sendHello()
+    this.enableNetworking()
     this.emit('connect')
   }
   
@@ -47,10 +50,14 @@ export default class BonjourSignaller extends EventEmitter {
     });
   }
 
+  // if a client attached and just say "hello", we tell them our session and name.
+  // this allows clients that might already know us to disconnect without icing.
   greet(ws, signal) {
     ws.send(JSON.stringify({action: 'greet', session: this.SESSION, name: this.NAME}))
   }
 
+  // in addition to manually introducing ourselves, we can also check published bonjour 
+  // postings for services that match what we're looking for.
   searchBonjour() {
     this.browser = bonjour.find({ type: 'ampl' }, 
       (service) => {
@@ -93,16 +100,18 @@ export default class BonjourSignaller extends EventEmitter {
   }
 
   // initiated by .start()
-  sendHello() {
-    console.log("sendHello()")
+  enableNetworking() {
+    console.log("enableNetworking()")
     this.prepareSignalServer();
+
     if (!process.env.BLOCKBONJOUR) { 
       this.searchBonjour();
       setTimeout( () => { this.publishBonjour(); }, 2000) // wait a couple seconds to reduce race conditions
     }
   }
 
-  sendGoodbye() {
+  disableNetworking() {
+    console.log("enableNetworking()")
     if(this.wss) {
       // NB for future debuggers: the server will stay running until all cxns close too
       this.wss.close(); 
@@ -111,11 +120,12 @@ export default class BonjourSignaller extends EventEmitter {
     if(this.service) this.service.stop();
   }
 
-  // initiated by bonjour `find()`.
+  // initiated by bonjour `find()` and `manualHello()`.
   hearHello(name, session, host, port) {
     console.log("hearHello()")
     let meta = {name: name, session: session, action: 'hello'}
-    this.emit('hello', meta, undefined, (offer) => this.sendOffer(host, port, offer))
+    
+    this.peergroup.processSignal(meta, undefined, (offer) => this.sendOffer(host, port, offer))
   }
 
   // initiated by hearHello()
@@ -140,7 +150,7 @@ export default class BonjourSignaller extends EventEmitter {
   hearOffer(ws, signal) {
     console.log("hearOffer: from", signal.name, "/", signal.session)
     let meta = {name: signal.name, session: signal.session, action: 'offer'}
-    this.emit('offer', meta, signal.body, (reply) => {
+    this.peergroup.processSignal(meta, signal.body, (reply) => {
       let msg = {name: this.NAME, session: this.SESSION, body: reply, action: 'reply'}
       this.sendReply(ws, msg)
     })
@@ -155,6 +165,6 @@ export default class BonjourSignaller extends EventEmitter {
   // request receives this in response to the above.
   hearReply(reply) {
     console.log("hearReply(): from", reply.name, "/", reply.session)
-    this.emit('reply', reply, reply.body, null)
+    this.peergroup.processSignal(reply, reply.body, null)
   }
 }

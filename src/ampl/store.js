@@ -15,7 +15,7 @@ export default class Store {
 
     let network = new aMPLNet(this.options.network)
     network.connect({
-      peerId: this.state._state.get("_id"),
+      peerId: this.state._state.get("_id"), // use our tesseract session ID as the peer id
       store: this
     })
 

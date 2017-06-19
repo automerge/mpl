@@ -10,12 +10,18 @@ export default class DeltaRouter {
     this.clocks = {}
     this.seqs = {}
 
+    this.peergroup.peers().forEach( (peer) => {
+      if (peer.self == false) {
+        this.sendVectorClock(peer)
+      }
+    })
+
     this.peergroup.on('peer', (peer) => {
       this.seqs[peer.id] = 0
       
       peer.on('connect', () => {
         if (peer.self == false) {
-          peer.send({docId: this.store.getState().docId, vectorClock: Tesseract.getVClock(this.store.getState()), seq:0})
+          this.sendVectorClock(peer)
         }
       })
 
@@ -59,6 +65,10 @@ export default class DeltaRouter {
         this.updatePeer(peer, state, this.clocks[peer.id])
       })
     }
+  }
+
+  sendVectorClock(peer) {
+    peer.send({docId: this.store.getState().docId, vectorClock: Tesseract.getVClock(this.store.getState()), seq:0})
   }
 
   updatePeer(peer, state, clock) {

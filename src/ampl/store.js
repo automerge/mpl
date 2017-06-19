@@ -47,7 +47,7 @@ export default class Store {
 
     this.state = newState
 
-    this.network.broadcastState(newState, action.type)
+    this.network.deltaRouter.broadcastState(newState, action.type)
     this.listeners.forEach((listener) => listener())
   }
 

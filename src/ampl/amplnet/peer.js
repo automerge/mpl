@@ -151,5 +151,6 @@ export default class Peer extends EventEmitter {
     var buffer = new Buffer(JSON.stringify(message), 'utf8')
     var compressed = lz4.encode(buffer);
     this.data_channel.send(compressed.toString('base64'))
+    this.emit('sent', message)
   }
 }

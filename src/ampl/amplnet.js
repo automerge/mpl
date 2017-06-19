@@ -6,71 +6,18 @@ import Tesseract from 'tesseract'
 import EventEmitter from 'events'
 import config from './config'
 
-export default class aMPLNet extends EventEmitter {
-  constructor(options) {
-    super()
 
-    this.name   = config.name || process.env.NAME
-    this.peergroup = new PeerGroup(options)
-    this.connected = false
-  }
-
-
-  connect(config) {
-    if (this.connected) throw "network already connected - disconnect first"
-    this.config = config || this.config
-    this.peerStats  = {}
+class DeltaRouter {
+  constructor(peergroup, store) {
+    this.peergroup = peergroup;
+    this.store = store;
+    
     this.clocks = {}
     this.seqs = {}
-    
-    this.peer_id = this.config.peerId
-    this.store  = this.config.store
-
-    this.connected = true
-
-    this.signaler = new BonjourSignaler({name: this.name, session: this.peer_id })
-  
-    this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
 
     this.peergroup.on('peer', (peer) => {
-      console.log("ON PEER",peer.id,peer.self)
       this.seqs[peer.id] = 0
       
-      this.peerStats[peer.id] = {
-        connected: false,
-        self: peer.self,
-        name: peer.name,
-        lastActivity: Date.now(),
-        messagesSent: 0,
-        messagesReceived: 0
-      }
-      this.emit('peer')
-
-      peer.on('disconnect', () => {
-        this.peerStats[peer.id].connected = false
-        this.emit('peer')
-      })
-
-      peer.on('closed', () => {
-        delete this.peerStats[peer.id]
-        this.emit('peer')
-      })
-
-      peer.on('connect', () => {
-        this.peerStats[peer.id].connected = true
-        this.peerStats[peer.id].lastActivity = Date.now()
-        this.peerStats[peer.id].messagesSent += 1
-        this.emit('peer')
-      })
-
-      peer.on('message', (m) => {
-        this.peerStats[peer.id].lastActivity = Date.now()
-        this.peerStats[peer.id].messagesReceived += 1
-        this.emit('peer')
-      })
-
-      // END PEER STATS
-
       peer.on('connect', () => {
         if (peer.self == false) {
           peer.send({docId: this.store.getState().docId, vectorClock: Tesseract.getVClock(this.store.getState()), seq:0})
@@ -96,22 +43,8 @@ export default class aMPLNet extends EventEmitter {
         }
       })
     })
-
-    this.peergroup.join(this.signaler)
   }
-
-  clockMax(clock1, clock2) {
-    let maxclock  = {}
-    let keys      = Object.keys(clock1).concat(Object.keys(clock2))
-
-    for (let i in keys) {
-      let key = keys[i]
-      maxclock[key] = Math.max(clock1[key] || 0, clock2[key] || 0)
-    }
-
-    return maxclock
-  }
-
+  
   broadcastState(state, action) {
     let clock = Tesseract.getVClock(state)
     this.clocks[this.peergroup.self().id] = clock
@@ -131,7 +64,6 @@ export default class aMPLNet extends EventEmitter {
         this.updatePeer(peer, state, this.clocks[peer.id])
       })
     }
-    this.emit('peer')
   }
 
   updatePeer(peer, state, clock) {
@@ -144,8 +76,90 @@ export default class aMPLNet extends EventEmitter {
     if (deltas.length > 0) {
       // docId probably shouldn't be here, but here it is for now.
       peer.send({docId: state.docId, deltas: deltas, seq: this.seqs[peer.id], vectorClock: myClock})
-      this.peerStats[peer.id].messagesSent += 1
     }
+  }
+
+  clockMax(clock1, clock2) {
+    let maxclock  = {}
+    let keys      = Object.keys(clock1).concat(Object.keys(clock2))
+
+    for (let i in keys) {
+      let key = keys[i]
+      maxclock[key] = Math.max(clock1[key] || 0, clock2[key] || 0)
+    }
+
+    return maxclock
+  }
+
+}
+
+export default class aMPLNet extends EventEmitter {
+  constructor(options) {
+    super()
+
+    this.name   = config.name || process.env.NAME
+    this.peergroup = new PeerGroup(options)
+    this.connected = false
+  }
+
+  connect(config) {
+    if (this.connected) throw "network already connected - disconnect first"
+    this.config = config || this.config
+    this.peerStats  = {}
+    
+    this.peer_id = this.config.peerId
+    this.store  = this.config.store
+
+    this.connected = true
+
+    this.signaler = new BonjourSignaler({name: this.name, session: this.peer_id })
+  
+    this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
+
+    this.deltaRouter = new DeltaRouter(this.peergroup, this.store)
+
+    this.peergroup.on('peer', (peer) => {
+      console.log("ON PEER",peer.id,peer.self)
+      
+      this.peerStats[peer.id] = {
+        connected: false,
+        self: peer.self,
+        name: peer.name,
+        lastActivity: Date.now(),
+        messagesSent: 0,
+        messagesReceived: 0
+      }
+      this.emit('peer')
+
+      peer.on('disconnect', () => {
+        this.peerStats[peer.id].connected = false
+        this.emit('peer')
+      })
+
+      peer.on('closed', () => {
+        delete this.peerStats[peer.id]
+        this.emit('peer')
+      })
+
+      peer.on('connect', () => {
+        this.peerStats[peer.id].connected = true
+        this.peerStats[peer.id].lastActivity = Date.now()
+        this.emit('peer')
+      })
+
+      peer.on('message', (m) => {
+        this.peerStats[peer.id].lastActivity = Date.now()
+        this.peerStats[peer.id].messagesReceived += 1
+        this.emit('peer')
+      })
+
+      peer.on('sent', (m) => {
+        this.peerStats[peer.id].messagesSent += 1
+        this.emit('peer')
+      })
+    })
+
+    this.peergroup.join(this.signaler)
   }
 
   disconnect() {

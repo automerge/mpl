@@ -1,5 +1,4 @@
 import Peer from './peer'
-import lz4  from 'lz4'
 import EventEmitter from 'events'
 
 export default class PeerGroup extends EventEmitter {

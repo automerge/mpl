@@ -1,4 +1,5 @@
 import Store from './ampl/store'
+import Network from './ampl/network'
 import Tesseract from 'tesseract'
 import config from './ampl/config'
 

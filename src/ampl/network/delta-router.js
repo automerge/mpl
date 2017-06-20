@@ -54,7 +54,6 @@ export default class DeltaRouter {
         try {
           // docId probably shouldn't be here, but here it is for now.
           peer.send({docId: state.docId, vectorClock: clock })
-          this.peerStats[peer.id].messagesSent += 1
         }
         catch (e) {
           console.log("Error sending to ["+peer.id+"]:", e)

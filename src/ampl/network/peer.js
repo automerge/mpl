@@ -3,7 +3,7 @@ import EventEmitter from 'events'
 
 export default class Peer extends EventEmitter {
   // XXX todo: cleanup passing args
-  constructor(options, id, name, send_signal) {
+  constructor(id, name, send_signal, wrtc) {
     super()
 
     this.id           = id
@@ -20,12 +20,12 @@ export default class Peer extends EventEmitter {
       }
     }
     // byowebrtc <- this is for node and could undoubtedly be better handled
-    else if (options) {
-      if (options.wrtc) {
-        this.wrtc = options.wrtc
-      } else {
-        throw "options.wrtc needs to be set in headless mode"
-      }
+    else if (wrtc) {
+      this.wrtc = wrtc
+    }
+    else {
+      console.log("wrtc", wrtc)
+      throw "wrtc needs to be set in headless mode"
     }
     
     this.WebRTCConfig = {

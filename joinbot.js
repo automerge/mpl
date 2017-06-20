@@ -13,11 +13,13 @@ let store = new ampl.default.Store(
         default:
           return state
       }
-    }, {network: {wrtc: wrtc}})
+    }, new ampl.default.Network(wrtc))
 
 store.dispatch({ type: "OPEN_DOCUMENT", docId: "botcounter" })
 
-store.network.signaler.manualHello(process.env.REMOTEHOST, process.env.REMOTEPORT)
+if (process.env.REMOTEHOST) {
+  store.network.signaler.manualHello(process.env.REMOTEHOST, process.env.REMOTEPORT)
+}
 
 setInterval( () => store.dispatch({ type: "INCREMENT_COUNTER", docId: "botcounter" }), 5000)
 

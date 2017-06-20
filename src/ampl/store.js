@@ -6,22 +6,18 @@ import Network from './network'
 import DeltaRouter from './network/delta-router'
 
 export default class Store {
-  constructor(reducer, options) {
+  constructor(reducer, network) {
     this.reducer   = reducer
     this.state     = this.tesseractInit()
     this.listeners = []
 
-    this.options = options || {network: {}}
-
-    let network = new Network(this.options.network)
-    network.connect({
+    this.network = network || new Network()
+    this.network.connect({
       // we use our tesseract session ID as the peer id, 
       // but we probably want to use the network ID for the document actorIds
       peerId: this.state._state.get("actorId"), 
       store: this
     })
-
-    this.network = network
   }
 
   dispatch(action) {

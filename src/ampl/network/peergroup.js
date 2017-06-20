@@ -3,12 +3,10 @@ import lz4  from 'lz4'
 import EventEmitter from 'events'
 
 export default class PeerGroup extends EventEmitter {
-  constructor(name, session, options) {
+  constructor(name, session, wrtc) {
     super()
 
-    // XXX cleanup this
-    this.options = options;
-
+    this.wrtc = wrtc;
     this.session = session;
     this.name = name;
 
@@ -42,7 +40,7 @@ export default class PeerGroup extends EventEmitter {
 
   getOrCreatePeer(id, name, handler) {
     if(!this.Peers[id]) {
-      let peer = new Peer(this.options, id, name, handler)
+      let peer = new Peer(id, name, handler, this.wrtc)
       // pvh moved this here from peer.js but doesn't understand it
       peer.on('closed', () => {
         delete this.Peers[peer.id]

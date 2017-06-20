@@ -11,7 +11,9 @@ let store = new ampl.default.Store(
         default:
           return state
       }
-    }, {network: {wrtc: wrtc}})
+    },
+    // for bots we need to pass in a network that has a node-friendly webrtc implementation.
+    new ampl.default.Network({wrtc: wrtc}))
 
 store.dispatch({ type: "OPEN_DOCUMENT", docId: "botcounter" })
 

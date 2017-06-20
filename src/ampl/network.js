@@ -7,11 +7,10 @@ import config from './config'
 
 
 export default class Network extends EventEmitter {
-  constructor(options) {
+  constructor(wrtc) {
     super()
 
-    // xxx NO REALLY, FIX ME.
-    this.options = options
+    this.wrtc = wrtc
     this.name   = config.name || process.env.NAME
     this.connected = false
   }
@@ -20,7 +19,7 @@ export default class Network extends EventEmitter {
     if (this.connected) throw "network already connected - disconnect first"
     this.config = config || this.config
 
-    this.peergroup = new PeerGroup(this.name, this.config.peerId, this.options)
+    this.peergroup = new PeerGroup(this.name, this.config.peerId, this.wrtc)
 
     this.peerStats  = {}
 

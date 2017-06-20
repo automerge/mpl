@@ -15,6 +15,7 @@ export default class WebRTCSignaler {
       })
 
       peer.on('message', (m) => {
+        console.log('received: wrtc %s', raw);
         if (m.knownPeers) {
           this.locatePeersThroughFriends(peer, m.knownPeers)
         }

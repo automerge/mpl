@@ -31,7 +31,7 @@ export default class BonjourSignaller extends EventEmitter {
 
     this.wss.on('connection', (ws) => {
       ws.on('message', (raw) => {
-        console.log('received: %s', raw);
+        console.log('received: bj %s', raw);
         var signal = JSON.parse(raw)
         if (signal.action == 'hello') {
           this.greet(ws, signal)

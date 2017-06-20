@@ -5,6 +5,7 @@ import config from './ampl/config'
 const aMPL = { 
   Store: Store,
   Tesseract: Tesseract,
+  Network: Network,
   config: config
 }
 

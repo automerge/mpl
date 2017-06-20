@@ -1,12 +1,12 @@
-import BonjourSignaler from './amplnet/bonjour-signaler'
-import WebRTCSignaler from './amplnet/webrtc-signaler' // this has a different and also crazy interface
+import BonjourSignaler from './network/bonjour-signaler'
+import WebRTCSignaler from './network/webrtc-signaler' // this has a different and also crazy interface
 
-import PeerGroup from './amplnet/peergroup'
+import PeerGroup from './network/peergroup'
 import EventEmitter from 'events'
 import config from './config'
 
 
-export default class aMPLNet extends EventEmitter {
+export default class Network extends EventEmitter {
   constructor(options) {
     super()
 

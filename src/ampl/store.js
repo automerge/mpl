@@ -2,8 +2,8 @@ import Tesseract from 'tesseract'
 import fs from 'fs'
 import uuidv4 from 'uuid/v4'
 
-import aMPLNet from './amplnet'
-import DeltaRouter from './amplnet/delta-router'
+import Network from './network'
+import DeltaRouter from './network/delta-router'
 
 export default class Store {
   constructor(reducer, options) {
@@ -13,7 +13,7 @@ export default class Store {
 
     this.options = options || {network: {}}
 
-    let network = new aMPLNet(this.options.network)
+    let network = new Network(this.options.network)
     network.connect({
       // we use our tesseract session ID as the peer id, 
       // but we probably want to use the network ID for the document actorIds

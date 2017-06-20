@@ -64,6 +64,10 @@ export default class BonjourSignaller extends EventEmitter {
           console.log("peerDiscovery(): Own session.")
           return
         }
+        if (meta.session < me.id) {
+          console.log("peerDiscovery(): peer outranks me - wait for them to offer")
+          return
+        }
         this.hearHello(service.txt.name, service.txt.session, service.host, service.port)
     })
   }

@@ -1,5 +1,6 @@
 import BonjourSignaler from './network/bonjour-signaler'
-import WebRTCSignaler from './network/webrtc-signaler' // this has a different and also crazy interface
+import WebRTCSignaler from './network/webrtc-signaler'
+import PeerStats from './network/peer-stats'
 
 import PeerGroup from './network/peergroup'
 import EventEmitter from 'events'
@@ -19,54 +20,12 @@ export default class Network extends EventEmitter {
     this.config = config || this.config
 
     this.peergroup = new PeerGroup(this.name, this.config.peerId, this.wrtc)
-
-    this.peerStats  = {}
-
     this.connected = true
 
     this.signaler = new BonjourSignaler(this.peergroup)
     this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
+    this.peerStats = new PeerStats(this.peergroup)
 
-    this.peergroup.on('peer', (peer) => {
-      console.log("ON PEER",peer.id,peer.self)
-      
-      this.peerStats[peer.id] = {
-        connected: false,
-        self: peer.self,
-        name: peer.name,
-        lastActivity: Date.now(),
-        messagesSent: 0,
-        messagesReceived: 0
-      }
-      this.emit('peer')
-
-      peer.on('disconnect', () => {
-        this.peerStats[peer.id].connected = false
-        this.emit('peer')
-      })
-
-      peer.on('closed', () => {
-        delete this.peerStats[peer.id]
-        this.emit('peer')
-      })
-
-      peer.on('connect', () => {
-        this.peerStats[peer.id].connected = true
-        this.peerStats[peer.id].lastActivity = Date.now()
-        this.emit('peer')
-      })
-
-      peer.on('message', (m) => {
-        this.peerStats[peer.id].lastActivity = Date.now()
-        this.peerStats[peer.id].messagesReceived += 1
-        this.emit('peer')
-      })
-
-      peer.on('sent', (m) => {
-        this.peerStats[peer.id].messagesSent += 1
-        this.emit('peer')
-      })
-    })
 
     // we define "connect" and "disconnect" for ourselves as whether
     // we're connected to the signaller.

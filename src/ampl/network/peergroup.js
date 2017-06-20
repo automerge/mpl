@@ -16,6 +16,8 @@ export default class PeerGroup extends EventEmitter {
 
   join() {
     // add ourselves to the peers list with a do-nothing signaller
+    // this has to happen after all the listeners register... which suggests
+    // we have some kind of an antipattern going
     this.me = this.getOrCreatePeer(this.session, this.name, undefined)
   }
 

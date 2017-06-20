@@ -7,17 +7,16 @@ let uuidv4 = require('uuid/v4');
 import EventEmitter from 'events'
 
 export default class BonjourSignaller extends EventEmitter {
-  constructor(peergroup, config) {
+  constructor(peergroup, name, session) {
     super()
 
-    this.SESSION = config.session || uuidv4()
-    this.NAME = config.name || "unknown"
+    if (!session) { console.log("NO SESSION PASSED TO BONJOUR SIGNALLER, MAKING ONE UP") }
+    this.SESSION = session || uuidv4()
+    
+    if (!name) { console.log("NO NAME PASSED TO BONJOUR SIGNALLER, MAKING ONE UP") }
+    this.NAME = name || "unknown"
 
     this.PORT = process.env.PORT || 3000 + Math.floor(Math.random() * 1000);
-
-    // backwards compat: todo
-    this.session = this.SESSION
-    this.name = this.NAME
 
     this.peergroup = peergroup;
   }

@@ -26,7 +26,6 @@ export default class Network extends EventEmitter {
     this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
     this.peerStats = new PeerStats(this.peergroup)
 
-
     // we define "connect" and "disconnect" for ourselves as whether
     // we're connected to the signaller.
     this.signaler.on('connect', () => {
@@ -43,8 +42,8 @@ export default class Network extends EventEmitter {
   disconnect() {
     if (this.connected == false) throw "network already disconnected - connect first"
     console.log("NETWORK DISCONNECT")
+    this.signaler.stop()
     this.peergroup.close()
     this.connected = false
-    this.emit('peer')
   }
 }

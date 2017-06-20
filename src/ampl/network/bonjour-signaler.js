@@ -1,7 +1,7 @@
 let bonjour = require('bonjour')()
 let WebSocket = require('ws');
 let bodyParser = require('body-parser')
-let request = require('request')
+let request = require('request') // XXX: remove?
 let uuidv4 = require('uuid/v4');
 
 import EventEmitter from 'events'
@@ -21,7 +21,7 @@ export default class BonjourSignaller extends EventEmitter {
   }
   
   stop() { 
-    this.sendGoodbye() 
+    this.disableNetworking() 
     this.emit('disconnect') 
   }
 

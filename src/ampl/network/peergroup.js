@@ -10,7 +10,6 @@ export default class PeerGroup extends EventEmitter {
     this.name = name;
 
     this.Peers        = {}
-    this.Handshakes   = {}
     this.processSignal = this.processSignal.bind(this)
   }
 
@@ -26,8 +25,6 @@ export default class PeerGroup extends EventEmitter {
       this.Peers[id].close()
       delete this.Peers[id]
     }
-    // throw away all cached handshakes
-    this.Handshakes = {}
     this.removeAllListeners()
   }
 
@@ -45,9 +42,6 @@ export default class PeerGroup extends EventEmitter {
       // pvh moved this here from peer.js but doesn't understand it
       peer.on('closed', () => {
         delete this.Peers[peer.id]
-        if (this.Handshakes[peer.id]) {
-          this.Handshakes[peer.id]()
-        }
       })
       this.Peers[id] = peer
       this.emit("peer", peer)
@@ -56,12 +50,7 @@ export default class PeerGroup extends EventEmitter {
   }
 
   beginHandshake(id, name, handler) {
-    delete this.Handshakes[id] // we're moving now, so discard this handshake
 
-    // this delete gives us the old semantics but i don't know why we do it
-    delete this.Peers[id]
-    let peer = this.getOrCreatePeer(id, name, handler);
-    peer.establishDataChannel();
   }
 
   processSignal(msg, signal, handler) {
@@ -69,28 +58,17 @@ export default class PeerGroup extends EventEmitter {
     let name = msg.name
     
     // FIXME - this could be cleaner 
-    if (msg.action == "hello") {
-      if (id in this.Peers) {
-        // we save a handshake for later if we already know them
-        this.Handshakes[id] = () => { this.beginHandshake(id,name,handler) }
-      } else {
-        this.beginHandshake(id,name,handler)
-      }
+    if (msg.action == "hello") {    // this delete gives us the old semantics but i don't know why we do it
+      delete this.Peers[id]
+      let peer = this.getOrCreatePeer(id, name, handler);
+      peer.establishDataChannel();
     }
-    else if (msg.action == "offer") {
-      if (id in this.Peers) {
-        this.Handshakes[id] = () => {
-          let peer = this.getOrCreatePeer(id,name,handler)
-          peer.handleSignal(signal)
-        }
-      } else {
+    else if (msg.action == "offer" || msg.action == "reply") {
         let peer = this.getOrCreatePeer(id,name,handler)
         peer.handleSignal(signal)
-      }
     }
     else {
-      let peer = this.getOrCreatePeer(id,name,handler)
-      peer.handleSignal(signal)
+      console.log("what the fuck kind of signal is", signal)
     }
   }
 }

@@ -53,11 +53,13 @@ export default class WebRTCSignaler {
       let remotePeerId = ids[i]
       if (!(myIds.includes(remotePeerId))) {
         // fake a hello message
+        console.log("WRTC FAKE HELLO", ids[i])
         let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name}
         // process the hello message to get the offer material
         this.peergroup.processSignal(msg, undefined, (offer) => {
           // send the exact same offer through the system
           let offerMsg = { action: "offer", name: me.name, session: me.id, to:remotePeerId, body:offer }
+          console.log("WRTC OFFER", offerMsg)
           peer.send(offerMsg)
         })
       }
@@ -87,6 +89,7 @@ export default class WebRTCSignaler {
     // this is inefficient; todo: look up the peer by id
     this.peergroup.peers().forEach((p) => {
       if (p.id == m.to) {
+        console.log("WRTC forward signal",p.id)
         p.send(m)
       }
     })
@@ -95,6 +98,7 @@ export default class WebRTCSignaler {
   // When we get a signal, forward it to the peer we know who wants it unless it's for us, in which case process it.
   routeSignal(peer, m) {
     if (m.to == this.peergroup.self().id) {
+      console.log("WRTC ACTION",m)
       this.handleSignal(peer, m)
     } else {
       this.forwardSignal(peer, m)

@@ -5,7 +5,7 @@ let wrtc = require('wrtc')
 
 require("dotenv").config()
 
-let store = new ampl.default.Store((state, action) => {
+let store = new ampl.Store((state, action) => {
   switch(action.type) {
     case "INCREMENT_COUNTER":
       return ampl.default.Tesseract.changeset(state, "increment counter", (doc) => {
@@ -14,7 +14,7 @@ let store = new ampl.default.Store((state, action) => {
     default:
       return state
   }
-}, {network: {wrtc: wrtc}})
+}, new ampl.Network(wrtc))
 
 store.dispatch({ type: "OPEN_DOCUMENT", docId: "botcounter-abcd" })
 setInterval(() => {

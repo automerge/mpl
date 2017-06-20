@@ -15,8 +15,7 @@ export default class Store {
     this.network.connect({
       // we use our tesseract session ID as the peer id, 
       // but we probably want to use the network ID for the document actorIds
-      peerId: this.state._state.get("actorId"), 
-      store: this
+      peerId: this.state._state.get("actorId")
     })
   }
 

@@ -5,7 +5,6 @@ import PeerGroup from './network/peergroup'
 import EventEmitter from 'events'
 import config from './config'
 
-
 export default class Network extends EventEmitter {
   constructor(wrtc) {
     super()

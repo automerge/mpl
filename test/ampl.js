@@ -16,7 +16,7 @@ function createStore() {
       default:
         return state
     }
-  }, { network: { wrtc: wrtc } })
+  }, new aMPL.Network(wrtc))
 
   return store
 }

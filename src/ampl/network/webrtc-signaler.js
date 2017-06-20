@@ -65,7 +65,7 @@ export default class WebRTCSignaler {
 
   handleSignal(peer, m) {
     this.peergroup.processSignal(m, m.body , (reply) => {
-      let me = this.peergroup.me()
+      let me = this.peergroup.self()
 
       if (m.action == "offer") {
         let replyMsg = {

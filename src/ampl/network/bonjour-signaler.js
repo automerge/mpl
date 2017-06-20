@@ -7,14 +7,8 @@ let uuidv4 = require('uuid/v4');
 import EventEmitter from 'events'
 
 export default class BonjourSignaller extends EventEmitter {
-  constructor(peergroup, name, session) {
+  constructor(peergroup) {
     super()
-
-    if (!session) { console.log("NO SESSION PASSED TO BONJOUR SIGNALLER, MAKING ONE UP") }
-    this.SESSION = session || uuidv4()
-    
-    if (!name) { console.log("NO NAME PASSED TO BONJOUR SIGNALLER, MAKING ONE UP") }
-    this.NAME = name || "unknown"
 
     this.PORT = process.env.PORT || 3000 + Math.floor(Math.random() * 1000);
 
@@ -52,7 +46,8 @@ export default class BonjourSignaller extends EventEmitter {
   // if a client attached and just say "hello", we tell them our session and name.
   // this allows clients that might already know us to disconnect without icing.
   greet(ws, signal) {
-    ws.send(JSON.stringify({action: 'greet', session: this.SESSION, name: this.NAME}))
+    let me = this.peergroup.self()
+    ws.send(JSON.stringify({action: 'greet', session: me.id, name: me.name}))
   }
 
   // in addition to manually introducing ourselves, we can also check published bonjour 
@@ -60,10 +55,12 @@ export default class BonjourSignaller extends EventEmitter {
   searchBonjour() {
     this.browser = bonjour.find({ type: 'ampl' }, 
       (service) => {
+        let me = this.peergroup.self()
+
         console.log("peerDiscovery(): ", service.host, ":", service.port)
         console.log("peerDiscovery(): ", service.txt)
         let meta = service.txt
-        if (meta.session == this.SESSION) {
+        if (meta.session == me.id) {
           console.log("peerDiscovery(): Own session.")
           return
         }
@@ -72,17 +69,20 @@ export default class BonjourSignaller extends EventEmitter {
   }
 
   publishBonjour() {
+    let me = this.peergroup.self()
     // text is encoded into a k/v object by bonjour
     // bonjour downcases keynames.
-    let text = {session: this.SESSION, name: this.NAME}
-    let publish = { name: 'ampl-'+ this.SESSION, type: 'ampl', port: this.PORT, txt: text };
-    console.log("publishBonjour():",  'ampl-'+ this.SESSION, "type:", 'ampl', "port:", this.PORT, "txt:", JSON.stringify(text).split('\n').join(' '))
+    console.log(me)
+    let text = {session: me.id, name: me.name}
+    let publish = { name: 'ampl-'+ me.id, type: 'ampl', port: this.PORT, txt: text };
+    console.log("publishBonjour():",  'ampl-'+ me.id, "type:", 'ampl', "port:", this.PORT, "txt:", JSON.stringify(text).split('\n').join(' '))
     this.service = bonjour.publish(publish)
   }
 
   manualHello(host, port) {
     console.log("sendOffer():", host+":"+port )
-    let msg = {name: this.NAME, session: this.SESSION, action: 'hello'}
+    let me = this.peergroup.self()
+    let msg = {name: me.name, session: me.id, action: 'hello'}
     
     // This is creating a pile of websockets but to do this right I need to 
     // queue up messages that arrive here until we have an 'open' websocket and then send them.
@@ -130,7 +130,9 @@ export default class BonjourSignaller extends EventEmitter {
   // initiated by hearHello()
   sendOffer(host, port, offer) {
     console.log("sendOffer():", host+":"+port )
-    let msg = {name: this.NAME, session: this.SESSION, action: 'offer'}
+    let me = this.peergroup.self()
+    
+    let msg = {name: me.name, session: me.id, action: 'offer'}
     msg.body = offer;
 
     // This is creating a pile of websockets but to do this right I need to 
@@ -150,7 +152,8 @@ export default class BonjourSignaller extends EventEmitter {
     console.log("hearOffer: from", signal.name, "/", signal.session)
     let meta = {name: signal.name, session: signal.session, action: 'offer'}
     this.peergroup.processSignal(meta, signal.body, (reply) => {
-      let msg = {name: this.NAME, session: this.SESSION, body: reply, action: 'reply'}
+      let me = this.peergroup.self()
+      let msg = {name: me.name, session: me.id, body: reply, action: 'reply'}
       this.sendReply(ws, msg)
     })
   }

@@ -25,7 +25,7 @@ export default class Network extends EventEmitter {
 
     this.connected = true
 
-    this.signaler = new BonjourSignaler(this.peergroup, this.name, this.config.peerId)
+    this.signaler = new BonjourSignaler(this.peergroup)
     this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
 
     this.peergroup.on('peer', (peer) => {

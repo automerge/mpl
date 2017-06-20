@@ -31,7 +31,7 @@ export default class BonjourSignaller extends EventEmitter {
 
     this.wss.on('connection', (ws) => {
       ws.on('message', (raw) => {
-        console.log('received: %s', raw);
+        console.log('received: bj %s', raw);
         var signal = JSON.parse(raw)
         if (signal.action == 'hello') {
           this.greet(ws, signal)
@@ -62,6 +62,10 @@ export default class BonjourSignaller extends EventEmitter {
         let meta = service.txt
         if (meta.session == me.id) {
           console.log("peerDiscovery(): Own session.")
+          return
+        }
+        if (meta.session < me.id) {
+          console.log("peerDiscovery(): peer outranks me - wait for them to offer")
           return
         }
         this.hearHello(service.txt.name, service.txt.session, service.host, service.port)

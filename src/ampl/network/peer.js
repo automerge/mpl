@@ -146,7 +146,7 @@ export default class Peer extends EventEmitter {
 
   send(message) {
     if (this.self) return; // dont send messages to ourselves
-    if (!("data_channel" in this)) return; // dont send messages to disconnected peers
+    if (!this.connected()) return; // don't send to unconnected partners.
 
     var buffer = new Buffer(JSON.stringify(message), 'utf8')
     var compressed = lz4.encode(buffer);

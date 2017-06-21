@@ -22,6 +22,7 @@ export default class Network extends EventEmitter {
   connect(config) {
     if (this.connected) throw "network already connected - disconnect first"
 
+    // allow connect without a config to use the previous connect's config.
     this.config = config || this.config
 
     // we define "connect" and "disconnect" for ourselves as whether
@@ -33,8 +34,8 @@ export default class Network extends EventEmitter {
       this.peergroup.self().emit('disconnect')
     })
 
-    let name   = config.name || process.env.NAME
-    let peerId = config.peerId
+    let name   = this.config.name || process.env.NAME
+    let peerId = this.config.peerId
     if (!peerId) throw new Error("peerId required, not found in config")
     this.peergroup.join(peerId, name)
 

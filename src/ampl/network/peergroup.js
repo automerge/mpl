@@ -23,7 +23,6 @@ export default class PeerGroup extends EventEmitter {
       this.Peers[id].close()
       delete this.Peers[id]
     }
-    this.removeAllListeners()
   }
 
   peers() {

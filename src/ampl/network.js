@@ -10,18 +10,17 @@ export default class Network extends EventEmitter {
   constructor(wrtc) {
     super()
 
-    this.wrtc = wrtc
+    this.peergroup = new PeerGroup(wrtc)
+
+    this.signaler = new BonjourSignaler(this.peergroup)
+    this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
+    this.peerStats = new PeerStats(this.peergroup)
+
     this.connected = false
   }
 
   connect(config) {
     if (this.connected) throw "network already connected - disconnect first"
-    
-    this.peergroup = new PeerGroup(this.wrtc)
-
-    this.signaler = new BonjourSignaler(this.peergroup)
-    this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
-    this.peerStats = new PeerStats(this.peergroup)
 
     // we define "connect" and "disconnect" for ourselves as whether
     // we're connected to the signaller.

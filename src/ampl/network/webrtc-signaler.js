@@ -53,7 +53,7 @@ export default class WebRTCSignaler {
       let remotePeerId = ids[i]
       if (!(myIds.includes(remotePeerId))) {
         // fake a hello message
-        console.log("WRTC FAKE HELLO", ids[i])
+        console.log("WRTC FAKE HELLO", ids[i], knownPeers)
         let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name}
         // process the hello message to get the offer material
         this.peergroup.processSignal(msg, undefined, (offer) => {

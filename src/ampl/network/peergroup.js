@@ -48,9 +48,9 @@ export default class PeerGroup extends EventEmitter {
 
   processSignal(msg, signal, handler) {
     let id = msg.session
-    if (!id) throw "Tried to process a signal that had no peer ID"
+    if (!id) throw new Error("Tried to process a signal that had no peer ID")
     let name = msg.name
-    if (!name) throw "Tried to process a signal that had no name"
+    if (!name) throw new Error("Tried to process a signal that had no name")
     
     if (msg.action == "hello") {
       delete this.Peers[id]

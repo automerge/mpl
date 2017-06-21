@@ -25,7 +25,7 @@ export default class Peer extends EventEmitter {
     }
     else {
       console.log("wrtc", wrtc)
-      throw "wrtc needs to be set in headless mode"
+      throw new Error("wrtc needs to be set in headless mode")
     }
     
     this.WebRTCConfig = {

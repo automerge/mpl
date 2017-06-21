@@ -54,6 +54,7 @@ export default class PeerGroup extends EventEmitter {
     switch(msg.action) {
       case "hello":
         // on a "hello" we throw out the peer
+        if (this.Peers[id]) console.log("ALREADY HAVE A PEER UNDERWAY - NEW HELLO - RESET",id)
         delete this.Peers[id]
         peer = this.getOrCreatePeer(id, name, handler);
         peer.establishDataChannel();

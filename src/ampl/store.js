@@ -50,10 +50,15 @@ export default class Store {
         || action.type === "OPEN_DOCUMENT"
         || action.type === "FORK_DOCUMENT") {
           // the deltaRouter we have right now is per-document, so we need to reinitialize it for each new document.
-          this.deltaRouter = new DeltaRouter(this.network.peergroup, this)
+          this.deltaRouter = new DeltaRouter(this.network.peergroup, 
+            () => this.getState(), 
+            (deltas) => this.dispatch({
+              type: "APPLY_DELTAS",
+              deltas: deltas
+            }))
     }
 
-    this.deltaRouter.broadcastState(newState, action.type)
+    this.deltaRouter.broadcastState(newState)
     this.listeners.forEach((listener) => listener())
   }
 

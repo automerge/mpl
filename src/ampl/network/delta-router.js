@@ -3,9 +3,10 @@ import PeerGroup from './peergroup'
 import Tesseract from 'tesseract'
 
 export default class DeltaRouter {
-  constructor(peergroup, store) {
+  constructor(peergroup, getTesseractCB, applyTesseractDeltasCB) {
     this.peergroup = peergroup;
-    this.store = store;
+    this.getTesseractCB = getTesseractCB;
+    this.applyTesseractDeltasCB = applyTesseractDeltasCB;
     
     this.clocks = {}
     this.seqs = {}
@@ -30,71 +31,63 @@ export default class DeltaRouter {
       })
 
       peer.on('message', (m) => {
-        let store = this.store
+        let state = this.getTesseractCB()
 
         // right now we only care about a single docId
-        if (m.docId != this.store.getState().docId) {
+        if (m.docId != state.docId) {
           return
         }
 
         // try and apply deltas we receive
         if (m.deltas && m.deltas.length > 0) {
-          this.store.dispatch({
-            type: "APPLY_DELTAS",
-            deltas: m.deltas
-          })
+          this.applyTesseractDeltasCB(m.deltas)
         }
 
         // and if we get a vector clock, send the peer anything they're missing
         if (m.vectorClock && (m.deltas || m.seq == this.seqs[peer.id])) { // ignore acks for all but the last send
-          this.updatePeer(peer, this.store.getState(), m.vectorClock)
+          this.clocks[peer.id] = m.vectorClock
+          this.updatePeer(peer, state)
         }
       })
     })
   }
-  
-  // after each new local operation broadcast it to any peers that don't have it yet
-  broadcastState(state, action) {
-    let clock = Tesseract.getVClock(state)
-    this.clocks[this.peergroup.self().id] = clock
-    // if what we did was APPLY_DELTAS (which we probably got off the network)
-    if (action == "APPLY_DELTAS") {
-      // we'll want to tell our peers that we received some deltas so 
-      // their vector clock for us gets updated
-      this.peergroup.peers().forEach((peer) => {
-        // XXX FIXME: we ought to check if if those peers might want some of our newfound deltas here too! 
-        try {
-          // docId probably shouldn't be here, but here it is for now.
-          peer.send({docId: state.docId, vectorClock: clock })
-          // XXX why no seq here?
-        }
-        catch (e) {
-          console.log("Error sending to ["+peer.id+"]:", e)
-        }
-      })
-    } else {
-      this.peergroup.peers().forEach((peer) => {
-        this.updatePeer(peer, state, this.clocks[peer.id])
-      })
-    }
-  }
 
   sendVectorClock(peer) {
+    // TODO: fold into an updatePeer call?
     // why SEQ always zero here?
-    peer.send({docId: this.store.getState().docId, vectorClock: Tesseract.getVClock(this.store.getState()), seq:0})
+    peer.send({docId: this.getTesseractCB().docId, vectorClock: Tesseract.getVClock(this.getTesseractCB()), seq:0})
   }
 
-  updatePeer(peer, state, clock) {
-    if (peer == undefined) return
-    if (clock == undefined) return
+  // after each new local operation broadcast it to any peers that don't have it yet
+  broadcastState(state) {
     let myClock = Tesseract.getVClock(state)
-    this.clocks[peer.id] = this.clockMax(myClock,clock)
-    this.seqs[peer.id] += 1
-    let deltas = Tesseract.getDeltasAfter(state, clock)
-    if (deltas.length > 0) {
-      // docId probably shouldn't be here, but here it is for now.
-      peer.send({docId: state.docId, deltas: deltas, seq: this.seqs[peer.id], vectorClock: myClock})
+    this.clocks[this.peergroup.self().id] = myClock
+
+    this.peergroup.peers().forEach((peer) => {
+      this.updatePeer(peer, state)
+    })
+  }
+
+  updatePeer(peer, state) {
+    if (peer == undefined) return
+    
+    // docId probably shouldn't be here, but here it is for now.
+    let myClock = Tesseract.getVClock(state)
+    let msg = {docId: state.docId, vectorClock: myClock}
+
+    let theirClock = this.clocks[peer.id];
+    if (theirClock) {
+      let deltas = Tesseract.getDeltasAfter(state, theirClock)
+      if (deltas.length > 0) {
+        // update their clock to assume they received all these updates 
+        this.clocks[peer.id] = this.clockMax(myClock,theirClock)
+        this.seqs[peer.id] += 1
+
+        msg.deltas = deltas
+        msg.seq = this.seqs[peer.id] 
+      }
     }
+    peer.send(msg)
   }
 
   /* This should probably be a feature of Tesseract */

@@ -11,10 +11,10 @@ export default class DeltaRouter {
     this.clocks = {}
     this.seqs = {}
 
-    // on initialization, tell all our peers about our current vector clock 
+    // on initialization, tell all our existing peers about our current vector clock 
     this.peergroup.peers().forEach( (peer) => {
       if (peer.self == false) {
-        this.sendVectorClock(peer)
+        this.updatePeer(peer, this.getTesseractCB())
       }
     })
 
@@ -26,7 +26,7 @@ export default class DeltaRouter {
       // can catch us up on anything we missed.
       peer.on('connect', () => {
         if (peer.self == false) {
-          this.sendVectorClock(peer)
+          this.updatePeer(peer, this.getTesseractCB())
         }
       })
 
@@ -41,6 +41,9 @@ export default class DeltaRouter {
         // try and apply deltas we receive
         if (m.deltas && m.deltas.length > 0) {
           this.applyTesseractDeltasCB(m.deltas)
+          this.peergroup.peers().forEach((peer) => {
+            this.updatePeer(peer, this.getTesseractCB())
+          })
         }
 
         // and if we get a vector clock, send the peer anything they're missing
@@ -50,12 +53,6 @@ export default class DeltaRouter {
         }
       })
     })
-  }
-
-  sendVectorClock(peer) {
-    // TODO: fold into an updatePeer call?
-    // why SEQ always zero here?
-    peer.send({docId: this.getTesseractCB().docId, vectorClock: Tesseract.getVClock(this.getTesseractCB()), seq:0})
   }
 
   // after each new local operation broadcast it to any peers that don't have it yet

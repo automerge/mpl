@@ -36,9 +36,6 @@ export default class Store {
       case "FORK_DOCUMENT":
         newState = this.forkDocument(state, action)
         break;
-      case "APPLY_DELTAS":
-        newState = this.applyDeltas(state, action)
-        break;
       default:
         newState = this.reducer(state, action)
     }
@@ -52,10 +49,7 @@ export default class Store {
           // the deltaRouter we have right now is per-document, so we need to reinitialize it for each new document.
           this.deltaRouter = new DeltaRouter(this.network.peergroup, 
             () => this.getState(), 
-            (deltas) => this.dispatch({
-              type: "APPLY_DELTAS",
-              deltas: deltas
-            }))
+            (deltas) => this.state = this.applyDeltas(deltas))
     }
 
     this.deltaRouter.broadcastState(newState)

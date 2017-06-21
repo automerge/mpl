@@ -18,7 +18,6 @@ export default class Network extends EventEmitter {
     if (this.connected) throw "network already connected - disconnect first"
     
     this.peergroup = new PeerGroup(this.wrtc)
-    this.connected = true
 
     this.signaler = new BonjourSignaler(this.peergroup)
     this.webRTCSignaler = new WebRTCSignaler(this.peergroup)
@@ -37,7 +36,9 @@ export default class Network extends EventEmitter {
     let peerId = config.peerId
     if (!peerId) throw "a peerId is required for the peergroup to start"
     this.peergroup.join(peerId, name)
+
     this.signaler.start()
+    this.connected = true
   }
 
   disconnect() {

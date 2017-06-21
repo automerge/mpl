@@ -37,7 +37,6 @@ export default class PeerGroup extends EventEmitter {
   getOrCreatePeer(id, name, handler) {
     if(!this.Peers[id]) {
       let peer = new Peer(id, name, handler, this.wrtc)
-      // pvh moved this here from peer.js but doesn't understand it
       peer.on('closed', () => {
         delete this.Peers[peer.id]
       })
@@ -49,20 +48,23 @@ export default class PeerGroup extends EventEmitter {
 
   processSignal(msg, signal, handler) {
     let id = msg.session
+    if (!id) throw "Tried to process a signal that had no peer ID"
     let name = msg.name
+    if (!name) throw "Tried to process a signal that had no name"
     
-    // FIXME - this could be cleaner 
-    if (msg.action == "hello") {    // this delete gives us the old semantics but i don't know why we do it
+    if (msg.action == "hello") {
       delete this.Peers[id]
       let peer = this.getOrCreatePeer(id, name, handler);
       peer.establishDataChannel();
     }
     else if (msg.action == "offer" || msg.action == "reply") {
-        let peer = this.getOrCreatePeer(id,name,handler)
+        let peer = this.Peers[id]
+        if (!peer) throw "Received an offer or a reply for a peer we don't have registered."
+        
         peer.handleSignal(signal)
     }
     else {
-      console.log("what the fuck kind of signal is", signal)
+      console.log("UNRECOGNIZED SIGNAL:", signal)
     }
   }
 }

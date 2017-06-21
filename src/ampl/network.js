@@ -11,15 +11,13 @@ export default class Network extends EventEmitter {
     super()
 
     this.wrtc = wrtc
-    this.name   = config.name || process.env.NAME
     this.connected = false
   }
 
   connect(config) {
     if (this.connected) throw "network already connected - disconnect first"
-    this.config = config || this.config
-
-    this.peergroup = new PeerGroup(this.name, this.config.peerId, this.wrtc)
+    
+    this.peergroup = new PeerGroup(this.wrtc)
     this.connected = true
 
     this.signaler = new BonjourSignaler(this.peergroup)
@@ -35,7 +33,10 @@ export default class Network extends EventEmitter {
       this.peergroup.self().emit('disconnect')
     })
 
-    this.peergroup.join()
+    let name   = config.name || process.env.NAME
+    let peerId = config.peerId
+    if (!peerId) throw "a peerId is required for the peergroup to start"
+    this.peergroup.join(peerId, name)
     this.signaler.start()
   }
 

@@ -2,22 +2,20 @@ import Peer from './peer'
 import EventEmitter from 'events'
 
 export default class PeerGroup extends EventEmitter {
-  constructor(name, session, wrtc) {
+  constructor(wrtc) {
     super()
 
     this.wrtc = wrtc;
-    this.session = session;
-    this.name = name;
 
     this.Peers        = {}
     this.processSignal = this.processSignal.bind(this)
   }
 
-  join() {
+  join(session, name) {
     // add ourselves to the peers list with a do-nothing signaller
     // this has to happen after all the listeners register... which suggests
     // we have some kind of an antipattern going
-    this.me = this.getOrCreatePeer(this.session, this.name, undefined)
+    this.me = this.getOrCreatePeer(session, name, undefined)
   }
 
   close() {
@@ -47,10 +45,6 @@ export default class PeerGroup extends EventEmitter {
       this.emit("peer", peer)
     }
     return this.Peers[id]
-  }
-
-  beginHandshake(id, name, handler) {
-
   }
 
   processSignal(msg, signal, handler) {

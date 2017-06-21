@@ -109,7 +109,7 @@ export default class BonjourSignaller extends EventEmitter {
 
     if (!process.env.BLOCKBONJOUR) { 
       this.searchBonjour();
-      setTimeout( () => { this.publishBonjour(); }, 2000) // wait a couple seconds to reduce race conditions
+      setTimeout( () => { this.publishBonjour(); }, 500) // wait half a second to let bonjour detection happen first
     }
   }
 

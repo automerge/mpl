@@ -5,9 +5,6 @@ let wrtc = require('wrtc')
 
 require("dotenv").config()
 
-console.log("config", ampl.config)
-ampl.config.name = "ampltestbot"
-
 let store = new ampl.Store((state, action) => {
   switch(action.type) {
     case "INCREMENT_COUNTER":

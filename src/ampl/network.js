@@ -22,6 +22,8 @@ export default class Network extends EventEmitter {
   connect(config) {
     if (this.connected) throw "network already connected - disconnect first"
 
+    this.config = config || this.config
+
     // we define "connect" and "disconnect" for ourselves as whether
     // we're connected to the signaller.
     this.signaler.on('connect', () => {

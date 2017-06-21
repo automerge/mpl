@@ -33,7 +33,7 @@ export default class Network extends EventEmitter {
 
     let name   = config.name || process.env.NAME
     let peerId = config.peerId
-    if (!peerId) throw "a peerId is required for the peergroup to start"
+    if (!peerId) throw new Error("peerId required, not found in config")
     this.peergroup.join(peerId, name)
 
     this.signaler.start()

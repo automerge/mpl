@@ -50,21 +50,28 @@ export default class PeerGroup extends EventEmitter {
     let id = msg.session
     if (!id) throw new Error("Tried to process a signal that had no peer ID")
     let name = msg.name
-    if (!name) throw new Error("Tried to process a signal that had no name")
     
-    if (msg.action == "hello") {
-      delete this.Peers[id]
-      let peer = this.getOrCreatePeer(id, name, handler);
-      peer.establishDataChannel();
-    }
-    else if (msg.action == "offer" || msg.action == "reply") {
-        let peer = this.Peers[id]
-        if (!peer) throw "Received an offer or a reply for a peer we don't have registered."
-        
+    let peer;
+    switch(msg.action) {
+      case "hello":
+        // on a "hello" we throw out the peer
+        delete this.Peers[id]
+        peer = this.getOrCreatePeer(id, name, handler);
+        peer.establishDataChannel();
+        break;
+      case "offer":
+        // on an "offer" we can create a peer if we don't have one
+        // but this is might get wonky, since it could be a peer that's trying to reconnect 
+        peer = this.getOrCreatePeer(id, name, handler);
         peer.handleSignal(signal)
-    }
-    else {
-      console.log("UNRECOGNIZED SIGNAL:", signal)
+        break;
+      case "reply":
+        peer = this.Peers[id] // we definitely don't want replies for unknown peers.
+        if (!peer) throw "Received an offer or a reply for a peer we don't have registered."
+        peer.handleSignal(signal)
+        break;
+      default:
+        throw new Error("Unrecognized signal:", signal)
     }
   }
 }

@@ -1,7 +1,10 @@
 let ampl = require('./lib/ampl')
 let wrtc = require('wrtc')
 
+// XXX: why do i need .default in this file?
+
 let fieldName = (process.env.NAME || 'anonybot') + Math.floor(Math.random() * 1000)
+ampl.default.config.name = fieldName // ugh
 
 let store = new ampl.default.Store(
     (state, action) => {

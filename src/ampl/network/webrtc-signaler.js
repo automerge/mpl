@@ -51,7 +51,7 @@ export default class WebRTCSignaler {
 
     for (let i in ids) {
       let remotePeerId = ids[i]
-      if (!(myIds.includes(remotePeerId))) {
+      if (!(myIds.includes(remotePeerId)) && me.id > remotePeerId) {
         // fake a hello message
         console.log("WRTC FAKE HELLO", ids[i], knownPeers)
         let msg = {action: "hello", session: ids[i], name: knownPeers[remotePeerId].name}

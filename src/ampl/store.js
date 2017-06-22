@@ -75,6 +75,9 @@ export default class Store {
           console.log("New document detected:", m.docId)
           // initiate a tesseract
           this.documents[m.docId] = new Tesseract.init()
+          this.documents[m.docId] = Tesseract.changeset(this.documents[m.docId], "discovered the document", (doc) => {
+            doc.docId = m.docId
+          })
           // and give it a delta router
           this.routers[m.docId] = new DeltaRouter(this.network.peergroup, 
             () => this.documents[m.docId], 

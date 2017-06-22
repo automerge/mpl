@@ -36,9 +36,6 @@ export default class Store {
       case "FORK_DOCUMENT":
         newState = this.forkDocument(state, action)
         break;
-      case "APPLY_DELTAS":
-        newState = this.applyDeltas(state, action)
-        break;
       default:
         newState = this.reducer(state, action)
     }
@@ -50,10 +47,15 @@ export default class Store {
         || action.type === "OPEN_DOCUMENT"
         || action.type === "FORK_DOCUMENT") {
           // the deltaRouter we have right now is per-document, so we need to reinitialize it for each new document.
-          this.deltaRouter = new DeltaRouter(this.network.peergroup, this)
+          this.deltaRouter = new DeltaRouter(this.network.peergroup, 
+            () => this.getState(), 
+            (deltas) => {
+              this.state = this.applyDeltas(this.state, deltas)
+              this.listeners.forEach((listener) => listener())
+            })
     }
 
-    this.deltaRouter.broadcastState(newState, action.type)
+    this.deltaRouter.broadcastState()
     this.listeners.forEach((listener) => listener())
   }
 
@@ -99,8 +101,8 @@ export default class Store {
     return Tesseract.merge(state, otherTesseract)
   }
 
-  applyDeltas(state, action) {
-    return Tesseract.applyDeltas(state, action.deltas)
+  applyDeltas(state, deltas) {
+    return Tesseract.applyDeltas(state, deltas)
   }
 
   newDocument(state, action) {

@@ -112,6 +112,11 @@ export default class BonjourSignaller extends EventEmitter {
       let greeting = JSON.parse(data)
       this.hearHello(greeting.name, greeting.session, host, port)
     });
+
+    ws.on('error', (error) => {
+      if(callback)
+        callback(error)
+    });
   }
 
   // initiated by .start()

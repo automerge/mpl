@@ -92,7 +92,7 @@ export default class BonjourSignaller extends EventEmitter {
     this.service = bonjour.publish(publish)
   }
 
-  manualHello(host, port) {
+  manualHello(host, port, callback) {
     console.log("sendOffer():", host+":"+port )
     let me = this.peergroup.self()
     let msg = {name: me.name, session: me.id, action: 'hello'}
@@ -101,6 +101,7 @@ export default class BonjourSignaller extends EventEmitter {
     // queue up messages that arrive here until we have an 'open' websocket and then send them.
     let ws = new WebSocket("ws://"+host+":"+port+"/");
     ws.on('open', () => {
+      callback()
       ws.send(JSON.stringify(msg));
     });
 

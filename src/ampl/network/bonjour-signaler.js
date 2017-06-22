@@ -1,7 +1,6 @@
 let bonjour = require('bonjour')()
 let WebSocket = require('ws');
 let bodyParser = require('body-parser')
-let request = require('request') // XXX: remove?
 let uuidv4 = require('uuid/v4');
 
 import EventEmitter from 'events'
@@ -48,6 +47,16 @@ export default class BonjourSignaller extends EventEmitter {
   greet(ws, signal) {
     let me = this.peergroup.self()
     ws.send(JSON.stringify({action: 'greet', session: me.id, name: me.name}))
+  }
+
+  enableBonjour() {
+    this.searchBonjour();
+    setTimeout( () => { this.publishBonjour(); }, 500) // wait half a second to let bonjour detection happen first
+  }
+
+  disableBonjour() {
+    if(this.browser) this.browser.stop();
+    if(this.service) this.service.stop();
   }
 
   // in addition to manually introducing ourselves, we can also check published bonjour 
@@ -106,11 +115,6 @@ export default class BonjourSignaller extends EventEmitter {
   enableNetworking() {
     console.log("enableNetworking()")
     this.prepareSignalServer();
-
-    if (!process.env.BLOCKBONJOUR) { 
-      this.searchBonjour();
-      setTimeout( () => { this.publishBonjour(); }, 500) // wait half a second to let bonjour detection happen first
-    }
   }
 
   disableNetworking() {
@@ -119,8 +123,7 @@ export default class BonjourSignaller extends EventEmitter {
       // NB for future debuggers: the server will stay running until all cxns close too
       this.wss.close(); 
     }
-    if(this.browser) this.browser.stop();
-    if(this.service) this.service.stop();
+    this.disableBonjour() // this is safe even if bonjour wasn't enabled.
   }
 
   // initiated by bonjour `find()` and `manualHello()`.

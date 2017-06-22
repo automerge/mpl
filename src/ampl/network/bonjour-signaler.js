@@ -14,14 +14,14 @@ export default class BonjourSignaller extends EventEmitter {
     this.peergroup = peergroup;
   }
 
-  start() { 
+  start() {
     this.enableNetworking()
     this.emit('connect')
   }
-  
-  stop() { 
-    this.disableNetworking() 
-    this.emit('disconnect') 
+
+  stop() {
+    this.disableNetworking()
+    this.emit('disconnect')
   }
 
   prepareSignalServer() {
@@ -59,10 +59,10 @@ export default class BonjourSignaller extends EventEmitter {
     if(this.service) this.service.stop();
   }
 
-  // in addition to manually introducing ourselves, we can also check published bonjour 
+  // in addition to manually introducing ourselves, we can also check published bonjour
   // postings for services that match what we're looking for.
   searchBonjour() {
-    this.browser = bonjour.find({ type: 'ampl' }, 
+    this.browser = bonjour.find({ type: 'ampl' },
       (service) => {
         let me = this.peergroup.self()
 
@@ -92,15 +92,18 @@ export default class BonjourSignaller extends EventEmitter {
     this.service = bonjour.publish(publish)
   }
 
-  manualHello(host, port) {
+  manualHello(host, port, callback) {
     console.log("sendOffer():", host+":"+port )
     let me = this.peergroup.self()
     let msg = {name: me.name, session: me.id, action: 'hello'}
-    
-    // This is creating a pile of websockets but to do this right I need to 
+
+    // This is creating a pile of websockets but to do this right I need to
     // queue up messages that arrive here until we have an 'open' websocket and then send them.
     let ws = new WebSocket("ws://"+host+":"+port+"/");
     ws.on('open', () => {
+      if(callback)
+        callback()
+
       ws.send(JSON.stringify(msg));
     });
 
@@ -108,6 +111,11 @@ export default class BonjourSignaller extends EventEmitter {
       console.log(data)
       let greeting = JSON.parse(data)
       this.hearHello(greeting.name, greeting.session, host, port)
+    });
+
+    ws.on('error', (error) => {
+      if(callback)
+        callback(error)
     });
   }
 
@@ -121,7 +129,7 @@ export default class BonjourSignaller extends EventEmitter {
     console.log("enableNetworking()")
     if(this.wss) {
       // NB for future debuggers: the server will stay running until all cxns close too
-      this.wss.close(); 
+      this.wss.close();
     }
     this.disableBonjour() // this is safe even if bonjour wasn't enabled.
   }
@@ -130,7 +138,7 @@ export default class BonjourSignaller extends EventEmitter {
   hearHello(name, session, host, port) {
     console.log("hearHello()")
     let meta = {name: name, session: session, action: 'hello'}
-    
+
     this.peergroup.processSignal(meta, undefined, (offer) => this.sendOffer(host, port, offer))
   }
 
@@ -138,11 +146,11 @@ export default class BonjourSignaller extends EventEmitter {
   sendOffer(host, port, offer) {
     console.log("sendOffer():", host+":"+port )
     let me = this.peergroup.self()
-    
+
     let msg = {name: me.name, session: me.id, action: 'offer'}
     msg.body = offer;
 
-    // This is creating a pile of websockets but to do this right I need to 
+    // This is creating a pile of websockets but to do this right I need to
     // queue up messages that arrive here until we have an 'open' websocket and then send them.
     let ws = new WebSocket("ws://"+host+":"+port+"/");
     ws.on('open', () => {

@@ -13,7 +13,7 @@ export default class DeltaRouter {
     // on initialization, tell all our existing peers about our current vector clock 
     this.peergroup.peers().forEach( (peer) => {
       if (peer.self == false) {
-        this.sendDeltasToPeer(peer, this.getTesseractCB())
+        this.sendVectorClockToPeer(peer)
       }
     })
 

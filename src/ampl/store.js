@@ -17,6 +17,9 @@ export default class Store {
       // but we probably want to use the network ID for the document actorIds
       peerId: this.state._state.get("actorId")
     })
+    
+    this.documents = {}
+    this.routers = {}
   }
 
   dispatch(action) {
@@ -41,21 +44,53 @@ export default class Store {
     }
 
     this.state = newState
+    this.documents[newState.docId] = newState
 
-    if(!this.deltaRouter
+    if(!this.routers[this.state.docId]
         || action.type === "NEW_DOCUMENT"
         || action.type === "OPEN_DOCUMENT"
         || action.type === "FORK_DOCUMENT") {
-          // the deltaRouter we have right now is per-document, so we need to reinitialize it for each new document.
-          this.deltaRouter = new DeltaRouter(this.network.peergroup, 
-            () => this.getState(), 
+          let docId = this.state.docId
+          this.documents[docId] = this.state
+          this.routers[docId] = new DeltaRouter(this.network.peergroup, 
+            () => this.documents[docId], 
             (deltas) => {
-              this.state = this.applyDeltas(this.state, deltas)
-              this.listeners.forEach((listener) => listener())
-            })
+              this.documents[docId] = this.applyDeltas(this.documents[docId], deltas)
+              // only broadcast changes to redux for the document the user is looking at
+              if (this.state.docId == docId) {// this.state.docId may change with each call
+                this.state = this.documents[docId]
+                this.listeners.forEach((listener) => listener())
+              }
+          })
     }
 
-    this.deltaRouter.broadcastState()
+    this.network.peergroup.on('peer', (peer) => {
+      peer.on('message', (m) => {
+        if (!m.docId) {
+          return
+        }
+
+        // whenever we see a docId we haven't seen before
+        if (!this.documents[m.docId]) {
+          console.log("New document detected:", m.docId)
+          // initiate a tesseract
+          this.documents[m.docId] = new Tesseract.init()
+          // and give it a delta router
+          this.routers[m.docId] = new DeltaRouter(this.network.peergroup, 
+            () => this.documents[m.docId], 
+            (deltas) => {
+              this.documents[m.docId] = this.applyDeltas(this.documents[m.docId], deltas)
+              // only broadcast changes to redux for the document the user is looking at
+              if (this.state.docId == docId) {// this.state.docId may change with each call
+                this.state = this.documents[docId]
+                this.listeners.forEach((listener) => listener())
+              }
+          })
+        }
+      })
+    })
+
+    this.routers[this.state.docId].broadcastState()
     this.listeners.forEach((listener) => listener())
   }
 
@@ -96,6 +131,7 @@ export default class Store {
     return tesseract
   }
 
+  // XXX: this might lead to problems; which docId will we keep?
   mergeDocument(state, action) {
     let otherTesseract = Tesseract.load(action.file)
     return Tesseract.merge(state, otherTesseract)

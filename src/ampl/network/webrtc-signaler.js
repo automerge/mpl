@@ -5,18 +5,21 @@ import EventEmitter from 'events'
 export default class WebRTCSignaler {
   // todo: should this have the peergroup or should the peergroup listen to it?
   constructor(peergroup) {
+    this.peerDocs = {}
     peergroup.on('peer', (peer) => {
       peer.on('connect', () => {
+        // broadcast on any chance in the peers set - connect or disconnect
         this.broadcastKnownPeers()
       })
       peer.on('disconnect', () => {
-        // XXX: orion, why do we broadcast disconnects?
+        // broadcast on any chance in the peers set - connect or disconnect
         this.broadcastKnownPeers()
       })
 
       peer.on('message', (m) => {
         console.log('received: wrtc %s', m);
         if (m.knownPeers) {
+          this.peerDocs[peer.id] = m.docId
           this.locatePeersThroughFriends(peer, m.knownPeers)
         }
 
@@ -40,7 +43,7 @@ export default class WebRTCSignaler {
       })
 
       console.log("Broadcasting known peers to " + peer.id, knownPeers)
-      peer.send({knownPeers: knownPeers})
+      peer.send({knownPeers: knownPeers, docId: this.docId})
     })
   }
 
@@ -103,5 +106,14 @@ export default class WebRTCSignaler {
     } else {
       this.forwardSignal(peer, m)
     }
+  }
+
+  broadcastActiveDocId(docId) {
+    this.docId = docId
+    this.broadcastKnownPeers()
+  }
+
+  getPeerDocs() {
+    return this.peerDocs
   }
 }

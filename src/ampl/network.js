@@ -43,6 +43,14 @@ export default class Network extends EventEmitter {
     this.connected = true
   }
 
+  broadcastActiveDocId(docId) {
+    this.webRTCSignaler.broadcastActiveDocId(docId)
+  }
+
+  getPeerDocs() {
+    return this.webRTCSignaler.getPeerDocs()
+  }
+
   disconnect() {
     if (this.connected == false) throw "network already disconnected - connect first"
     console.log("NETWORK DISCONNECT")

@@ -4,6 +4,7 @@ import uuidv4 from 'uuid/v4'
 
 import Network from './network'
 import DeltaRouter from './network/delta-router'
+import Config from './config'
 
 export default class Store {
   constructor(reducer, network) {
@@ -15,6 +16,7 @@ export default class Store {
     this.network.connect({
       // we use our tesseract session ID as the peer id, 
       // but we probably want to use the network ID for the document actorIds
+      name: Config.name,
       peerId: this.state._state.get("actorId")
     })
   }
@@ -53,6 +55,7 @@ export default class Store {
               this.state = this.applyDeltas(this.state, deltas)
               this.listeners.forEach((listener) => listener())
             })
+          this.network.broadcastActiveDocId(this.state.docId)
     }
 
     this.deltaRouter.broadcastState()
@@ -111,6 +114,10 @@ export default class Store {
 
   removeAllListeners() {
     this.listeners = []
+  }
+
+  getPeerDocs() {
+    return this.network.getPeerDocs()
   }
 
   tesseractInit() {

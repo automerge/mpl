@@ -9,24 +9,22 @@ export default class DeltaRouter {
     this.applyTesseractDeltasCB = applyTesseractDeltasCB;
     
     this.clocks = {}
-    this.seqs = {}
 
     // on initialization, tell all our existing peers about our current vector clock 
     this.peergroup.peers().forEach( (peer) => {
       if (peer.self == false) {
-        this.updatePeer(peer, this.getTesseractCB())
+        this.sendDeltasToPeer(peer, this.getTesseractCB())
       }
     })
 
     // listen for new peers
     this.peergroup.on('peer', (peer) => {
-      this.seqs[peer.id] = 0
       
       // send our clock to peers when we first connect so they
       // can catch us up on anything we missed.
       peer.on('connect', () => {
-        if (peer.self == false) {
-          this.updatePeer(peer, this.getTesseractCB())
+        if (peer.self == false) { // FIXME - remove once we take self out of peers
+          this.sendVectorClockToPeer(peer)
         }
       })
 
@@ -40,51 +38,86 @@ export default class DeltaRouter {
 
         // try and apply deltas we receive
         if (m.deltas && m.deltas.length > 0) {
+          console.log("APPLY DELTAS",m.deltas.length)
           this.applyTesseractDeltasCB(m.deltas)
-          this.peergroup.peers().forEach((peer) => {
-            this.updatePeer(peer, this.getTesseractCB())
-          })
+          this.broadcastVectorClock()
         }
 
         // and if we get a vector clock, send the peer anything they're missing
-        if (m.vectorClock && (m.deltas || m.seq == this.seqs[peer.id])) { // ignore acks for all but the last send
-          this.clocks[peer.id] = m.vectorClock
-          this.updatePeer(peer, state)
+        if (m.vectorClock) { // ignore acks for all but the last send
+          console.log("got vector clock from", peer.id)
+          this.clocks[peer.id] = this.clockMax(m.vectorClock, this.clocks[peer.id] || {})
+
+          if (this.aheadOf(peer)) {
+            console.log("We are ahead - send deltas",peer.id)
+            this.sendDeltasToPeer(peer)
+          }
+
+          if (this.behind(peer)) {
+            console.log("We are behind - request deltas",peer.id)
+            this.sendVectorClockToPeer(peer)
+          }
         }
       })
     })
   }
 
   // after each new local operation broadcast it to any peers that don't have it yet
-  broadcastState(state) {
-    let myClock = Tesseract.getVClock(state)
-    this.clocks[this.peergroup.self().id] = myClock
-
+  broadcastVectorClock() {
+    console.log("broadcast vector clock")
     this.peergroup.peers().forEach((peer) => {
-      this.updatePeer(peer, state)
+      this.sendVectorClockToPeer(peer)
     })
   }
 
-  updatePeer(peer, state) {
-    if (peer == undefined) return
-    
-    // docId probably shouldn't be here, but here it is for now.
-    let myClock = Tesseract.getVClock(state)
-    let msg = {docId: state.docId, vectorClock: myClock}
+  broadcastState() {
+    console.log("broadcast state")
+    this.peergroup.peers().forEach((peer) => {
+      this.sendDeltasToPeer(peer)
+    })
+  }
 
+  sendDeltasToPeer(peer) {
+    console.log("maybe send deltas")
+    let state = this.getTesseractCB()
+    let myClock = Tesseract.getVClock(state)
     let theirClock = this.clocks[peer.id];
+
     if (theirClock) {
       let deltas = Tesseract.getDeltasAfter(state, theirClock)
       if (deltas.length > 0) {
-        // update their clock to assume they received all these updates 
         this.clocks[peer.id] = this.clockMax(myClock,theirClock)
-        this.seqs[peer.id] += 1
-
-        msg.deltas = deltas
-        msg.seq = this.seqs[peer.id] 
+        console.log("SEND DELTAS",deltas.length)
+        peer.send({docId: state.docId, vectorClock: myClock, deltas:deltas})
       }
     }
-    peer.send(msg)
+  }
+
+  sendVectorClockToPeer(peer) {
+    console.log("send vector clock to peer")
+    let state = this.getTesseractCB()
+    let myClock = Tesseract.getVClock(state)
+    peer.send({ docId: state.docId, vectorClock: myClock })
+  }
+
+  behind(peer) {
+    let clock = this.clocks[peer.id]
+    let state = this.getTesseractCB()
+    let myClock = Tesseract.getVClock(state)
+    for (let i in Object.keys(clock)) {
+      if (clock[i] > (myClock[i] || 0)) return true
+    }
+    return false
+  }
+
+  aheadOf(peer) {
+    let clock = this.clocks[peer.id]
+    let state = this.getTesseractCB()
+    let myClock = Tesseract.getVClock(state)
+    for (let i in Object.keys(myClock)) {
+      if (myClock[i] > (clock[i] || 0)) return true
+    }
+    return false
   }
 
   /* This should probably be a feature of Tesseract */

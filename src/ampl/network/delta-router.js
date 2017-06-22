@@ -7,19 +7,45 @@ export default class DeltaRouter {
     this.peergroup = peergroup;
     this.getTesseractCB = getTesseractCB;
     this.applyTesseractDeltasCB = applyTesseractDeltasCB;
-    
+
     this.clocks = {}
 
-    // on initialization, tell all our existing peers about our current vector clock 
+    //// --- how the network chatter works --- ///
+
+    //// MESSAGE TYPES:
+
+    //// Delta Message { deltas:[], vectorClock:vc }
+    ////      when sending delta messages preemtively add the updated deltas to our stored clock for that peer
+    ////      this prevents a cascade of repeated deltas if we send more than 1 delta before the first reply
+
+    //// Vector Clock  { vectorClock:vc }
+    ////      this lets peers know where you are and what to (or not to) send
+
+    //// EVENTS AND WHAT TO DO:
+
+    //// On Connect -->
+    ////      send a Vector Clock to the peer (and they send one to you)
+    //// On Local State Change -->
+    ////      broadcast a deltas message to all peers
+    //// On Vector Clock -->
+    ////      if I have deltas they need --> Send Delta Message
+    ////      if they have deltas I need --> Send a Vector Clock back (to trigger the deltas exchange)
+    ////      otherwise do nothing and let the exchange end
+    //// On Deltas Message -->
+    ////      apply deltas - then send vector clock to all peers so they know my current state
+
+    //// NOTE:
+
+    ////      currently all messages have a docId which we filter on - multidoc is on its way
+
     this.peergroup.peers().forEach( (peer) => {
       if (peer.self == false) {
         this.sendVectorClockToPeer(peer)
       }
     })
 
-    // listen for new peers
     this.peergroup.on('peer', (peer) => {
-      
+
       // send our clock to peers when we first connect so they
       // can catch us up on anything we missed.
       peer.on('connect', () => {

@@ -45,7 +45,9 @@ export default class Peer extends EventEmitter {
 
   close() {
     try {
-      this.webrtc.close()
+      if (this.webrtc) {
+        this.webrtc.close()
+      }
     } catch (err) {
       console.log("WebRTCPeerConnection threw an error during close().", err)
     }

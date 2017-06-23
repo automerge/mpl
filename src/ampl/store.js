@@ -14,7 +14,7 @@ export default class Store {
 
     this.network = network || new Network()
     this.network.connect({
-      // we use our tesseract session ID as the peer id, 
+      // we use our tesseract session ID as the peer id,
       // but we probably want to use the network ID for the document actorIds
       name: Config.name,
       peerId: this.state._state.get("actorId")
@@ -49,8 +49,9 @@ export default class Store {
         || action.type === "OPEN_DOCUMENT"
         || action.type === "FORK_DOCUMENT") {
           // the deltaRouter we have right now is per-document, so we need to reinitialize it for each new document.
-          this.deltaRouter = new DeltaRouter(this.network.peergroup, 
-            () => this.getState(), 
+          this.deltaRouter = new DeltaRouter(this.network.peergroup,
+            // use this.state so this.getState() can be monkeypatched outside of aMPL
+            () => this.state,
             (deltas) => {
               this.state = this.applyDeltas(this.state, deltas)
               this.listeners.forEach((listener) => listener())
@@ -123,7 +124,7 @@ export default class Store {
   tesseractInit() {
     let tesseract = new Tesseract.init()
     tesseract = Tesseract.changeset(tesseract, "new document", (doc) => {
-      doc.docId = uuidv4() 
+      doc.docId = uuidv4()
     })
 
     return tesseract

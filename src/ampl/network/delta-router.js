@@ -71,7 +71,7 @@ export default class DeltaRouter {
 
         // and if we get a vector clock, send the peer anything they're missing
         if (m.vectorClock) { // ignore acks for all but the last send
-          console.log("got vector clock from", peer.id)
+          console.log("got vector clock from", peer.id, m.vectorClock)
           this.clocks[peer.id] = this.clockMax(m.vectorClock, this.clocks[peer.id] || {})
 
           if (this.aheadOf(peer)) {
@@ -120,9 +120,9 @@ export default class DeltaRouter {
   }
 
   sendVectorClockToPeer(peer) {
-    console.log("send vector clock to peer")
     let state = this.getTesseractCB()
     let myClock = Tesseract.getVClock(state)
+    console.log("send vector clock to peer",myClock)
     peer.send({ docId: state.docId, vectorClock: myClock })
   }
 
@@ -130,8 +130,10 @@ export default class DeltaRouter {
     let clock = this.clocks[peer.id]
     let state = this.getTesseractCB()
     let myClock = Tesseract.getVClock(state)
-    for (let i in Object.keys(clock)) {
-      if (clock[i] > (myClock[i] || 0)) return true
+    for (let i in clock) {
+      let a = clock[i]
+      let b = (myClock[i] || 0)
+      if (a > b) return true
     }
     return false
   }
@@ -140,8 +142,10 @@ export default class DeltaRouter {
     let clock = this.clocks[peer.id]
     let state = this.getTesseractCB()
     let myClock = Tesseract.getVClock(state)
-    for (let i in Object.keys(myClock)) {
-      if (myClock[i] > (clock[i] || 0)) return true
+    for (let i in myClock) {
+      let a = myClock[i]
+      let b = (clock[i] || 0)
+      if (a > b) return true
     }
     return false
   }

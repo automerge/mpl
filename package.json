@@ -1,6 +1,6 @@
 {
   "name": "aMPL",
-  "version": "0.2.13",
+  "version": "0.2.14",
   "main": "lib/ampl",
   "author": "",
   "license": "ISC",
@@ -21,7 +21,7 @@
     "dotenv": "^4.0.0",
     "express": "^4.15.3",
     "lz4": "^0.5.3",
-    "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git#v0.3.0",
+    "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git#v0.4.0",
     "uuid": "^3.0.1",
     "ws": "^3.0.0"
   },

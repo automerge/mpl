@@ -45,6 +45,13 @@ export default class PeerGroup extends EventEmitter {
     return this.Peers[id]
   }
 
+  setName(name) {
+    this.Peers.forEach((peer) => {
+      peer.send({name: name})
+    })
+    this.self().name = name
+  }
+
   processSignal(msg, signal, handler) {
     let id = msg.session
     if (!id) throw new Error("Tried to process a signal that had no peer ID")

@@ -36,6 +36,7 @@ export default class PeerStats extends EventEmitter {
 
       peer.on('rename', (name) => { // this is only used for self
         this.peerStats[peer.id].name = name
+        this.emit('peer')
       })
 
       peer.on('message', (m) => {

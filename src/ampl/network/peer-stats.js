@@ -34,8 +34,12 @@ export default class PeerStats extends EventEmitter {
         this.emit('peer')
       })
 
+      peer.on('rename', (name) => { // this is only used for self
+        this.peerStats[peer.id].name = name
+      })
+
       peer.on('message', (m) => {
-        if (m.name) {
+        if (m.name) { // this comes in off the network
           this.peerStats[peer.id].name = m.name
         }
         this.peerStats[peer.id].lastActivity = Date.now()

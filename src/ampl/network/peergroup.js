@@ -46,10 +46,11 @@ export default class PeerGroup extends EventEmitter {
   }
 
   setName(name) {
-    this.Peers.forEach((peer) => {
+    this.peers().forEach((peer) => {
       peer.send({name: name})
     })
     this.self().name = name
+    this.self().emit('rename',name)
   }
 
   processSignal(msg, signal, handler) {

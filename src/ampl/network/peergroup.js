@@ -26,7 +26,7 @@ export default class PeerGroup extends EventEmitter {
   }
 
   peers() {
-    return Object.values(this.Peers)
+    return Object.keys(this.Peers).map(key => this.Peers[key])
   }
 
   self() {

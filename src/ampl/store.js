@@ -6,11 +6,31 @@ import Network from './network'
 import DeltaRouter from './network/delta-router'
 import Config from './config'
 
+function compose () {
+  var fns = arguments;
+
+  return function (result) {
+    for (var i = fns.length - 1; i > -1; i--) {
+      result = fns[i].call(this, result);
+    }
+
+    return result;
+  };
+}
+
 export default class Store {
-  constructor(reducer, network) {
+  constructor(reducer, network, middlewares) {
     this.reducer   = reducer
     this.state     = this.tesseractInit()
     this.listeners = []
+
+    // Middleware
+    if(middlewares && middlewares.length > 0) {
+      let dispatch = this.dispatch
+      let api   = { getState: this.getState.bind(this), dispatch: action => dispatch(action) }
+      let chain = middlewares.map(middleware => middleware(api))
+      this.dispatch = compose(...chain)(dispatch.bind(this))
+    }
 
     this.network = network || new Network()
     this.network.connect({

@@ -6,7 +6,7 @@ import childProcess from 'child_process'
 
 dotenv.config()
 
-function createStore() {
+function createStore(middleware) {
   let store = new aMPL.Store((state, action) => {
     switch(action.type) {
       case "INCREMENT":
@@ -16,10 +16,31 @@ function createStore() {
       default:
         return state
     }
-  }, new aMPL.Network(wrtc))
+  }, new aMPL.Network(wrtc), middleware)
 
   return store
 }
+
+describe("Middleware", function() {
+  it("wraps the store's dispatch method", function() {
+    let before, after 
+    let setFlags = ({ getState, dispatch}) => {
+      return next => action => {
+          before = "success"
+          let nextMiddleware = next(action)
+          after = "success"
+          return nextMiddleware
+      }
+    } 
+
+    let store = createStore([ setFlags ])
+    store.dispatch({ type: "INCREMENT" })
+
+    assert.equal(before, "success") 
+    assert.equal(after, "success") 
+    assert.equal(store.getState().counter, 1)
+  })
+})
 
 describe("Store", function() {
   it("initializes", function() {

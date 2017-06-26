@@ -114,7 +114,8 @@ export default class DeltaRouter {
       if (deltas.length > 0) {
         this.clocks[peer.id] = this.clockMax(myClock,theirClock)
         console.log("SEND DELTAS",deltas.length)
-        peer.send({docId: state.docId, vectorClock: myClock, deltas:deltas})
+        // we definitely shuoldn't be passing "boardTitle" like this
+        peer.send({docId: state.docId, docTitle: state.boardTitle, vectorClock: myClock, deltas:deltas})
       }
     }
   }
@@ -123,7 +124,8 @@ export default class DeltaRouter {
     let state = this.getTesseractCB()
     let myClock = Tesseract.getVClock(state)
     console.log("send vector clock to peer",myClock)
-    peer.send({ docId: state.docId, vectorClock: myClock })
+    // we definitely shuoldn't be passing "boardTitle" like this
+    peer.send({ docId: state.docId, docTitle: state.boardTitle, vectorClock: myClock })
   }
 
   behind(peer) {

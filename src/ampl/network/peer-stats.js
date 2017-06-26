@@ -43,6 +43,13 @@ export default class PeerStats extends EventEmitter {
         if (m.name) { // this comes in off the network
           this.peerStats[peer.id].name = m.name
         }
+        if (m.docId) {
+          this.peerStats[peer.id].docId = m.docId
+        }
+        if (m.docTitle) {
+          this.peerStats[peer.id].docTitle = m.docTitle
+        }
+
         this.peerStats[peer.id].lastActivity = Date.now()
         this.peerStats[peer.id].messagesReceived += 1
         this.emit('peer')

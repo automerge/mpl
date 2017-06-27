@@ -41,61 +41,65 @@ export default class DeltaRouter {
     this.peergroup.peers().forEach( (peer) => {
       if (peer.self == false) {
         this.sendVectorClockToPeer(peer)
+        this.listenToPeer(peer)
       }
     })
 
     this.peergroup.on('peer', (peer) => {
+        this.listenToPeer(peer)
+    })
+  }
 
-      // send our clock to peers when we first connect so they
-      // can catch us up on anything we missed.
-      peer.on('connect', () => {
-        if (peer.self == false) { // FIXME - remove once we take self out of peers
+  listenToPeer(peer) {
+    // send our clock to peers when we first connect so they
+    // can catch us up on anything we missed.
+    peer.on('connect', () => {
+      if (peer.self == false) { // FIXME - remove once we take self out of peers
+        this.sendVectorClockToPeer(peer)
+      }
+    })
+
+    peer.on('message', (m) => {
+      let state = this.getTesseractCB()
+
+      // right now we only care about a single docId
+      if (m.docId != state.docId) {
+        return
+      }
+
+      // try and apply deltas we receive
+      if (m.deltas && m.deltas.length > 0) {
+        console.log("APPLY DELTAS",m.deltas.length)
+        this.applyTesseractDeltasCB(m.deltas)
+        this.broadcastVectorClock()
+      }
+
+      // and if we get a vector clock, send the peer anything they're missing
+      if (m.vectorClock) { // ignore acks for all but the last send
+        console.log("got vector clock from", peer.id, m.vectorClock)
+
+        // we maintain an estimated clock that assumes messages we sent will be applied by our peer
+        // POSSIBLE BUG: i haven't checked but this clock should be reset after reconnect but probably isn't!
+        //let theirEstimatedClock = this.clockMax(m.vectorClock, this.clocks[peer.id] || {})
+        let theirEstimatedClock = m.vectorClock // clock estimation disabled for now
+        let myClock = Tesseract.getVClock(state)
+
+        if (this.isAheadOf(myClock, theirEstimatedClock)) {
+          console.log("We are ahead - send deltas",peer.id)
+          this.sendDeltasToPeer(peer)
+        }
+
+        // it should be safe to use the estimated clock but for this purpose m.vectorClock would work too
+        if (this.isAheadOf(theirEstimatedClock, myClock)) {
+          console.log("We are behind - request deltas",peer.id)
           this.sendVectorClockToPeer(peer)
         }
-      })
 
-      peer.on('message', (m) => {
-        let state = this.getTesseractCB()
+        // update the clock after sending to prevent exceptions above from falsely moving our
+        // estimated peer clock forward
+        this.clocks[peer.id] = theirEstimatedClock
 
-        // right now we only care about a single docId
-        if (m.docId != state.docId) {
-          return
-        }
-
-        // try and apply deltas we receive
-        if (m.deltas && m.deltas.length > 0) {
-          console.log("APPLY DELTAS",m.deltas.length)
-          this.applyTesseractDeltasCB(m.deltas)
-          this.broadcastVectorClock()
-        }
-
-        // and if we get a vector clock, send the peer anything they're missing
-        if (m.vectorClock) { // ignore acks for all but the last send
-          console.log("got vector clock from", peer.id, m.vectorClock)
-
-          // we maintain an estimated clock that assumes messages we sent will be applied by our peer
-          // POSSIBLE BUG: i haven't checked but this clock should be reset after reconnect but probably isn't!
-          //let theirEstimatedClock = this.clockMax(m.vectorClock, this.clocks[peer.id] || {})
-          let theirEstimatedClock = m.vectorClock // clock estimation disabled for now
-          let myClock = Tesseract.getVClock(state)
-
-          if (this.isAheadOf(myClock, theirEstimatedClock)) {
-            console.log("We are ahead - send deltas",peer.id)
-            this.sendDeltasToPeer(peer)
-          }
-
-          // it should be safe to use the estimated clock but for this purpose m.vectorClock would work too
-          if (this.isAheadOf(theirEstimatedClock, myClock)) {
-            console.log("We are behind - request deltas",peer.id)
-            this.sendVectorClockToPeer(peer)
-          }
-
-          // update the clock after sending to prevent exceptions above from falsely moving our
-          // estimated peer clock forward
-          this.clocks[peer.id] = theirEstimatedClock
-
-        }
-      })
+      }
     })
   }
 

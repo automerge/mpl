@@ -111,7 +111,7 @@ export default class BonjourSignaller extends EventEmitter {
       console.log(data)
       let greeting = JSON.parse(data)
 
-      if(greeting.session != me.id)
+      if(greeting.session != me.id && !(greeting.session in this.peergroup.Peers))
         this.hearHello(greeting.name, greeting.session, host, port)
     });
 

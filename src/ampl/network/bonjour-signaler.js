@@ -110,7 +110,9 @@ export default class BonjourSignaller extends EventEmitter {
     ws.on('message', (data) => {
       console.log(data)
       let greeting = JSON.parse(data)
-      this.hearHello(greeting.name, greeting.session, host, port)
+
+      if(greeting.session != me.id)
+        this.hearHello(greeting.name, greeting.session, host, port)
     });
 
     ws.on('error', (error) => {

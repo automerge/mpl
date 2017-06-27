@@ -7,19 +7,20 @@ export default class PeerStats extends EventEmitter {
     this.peerStats  = {}
     this.peergroup.on('peer', (peer) => {
       console.log("ON PEER",peer.id,peer.self)
-      
+
       this.peerStats[peer.id] = {
-        connected: false,
+        connected: peer.self,
         self: peer.self,
         name: peer.name,
         lastActivity: Date.now(),
         messagesSent: 0,
         messagesReceived: 0
       }
+
       this.emit('peer')
 
       peer.on('disconnect', () => {
-        this.peerStats[peer.id].connected = false
+        this.peerStats[peer.id].connected = peer.self 
         this.emit('peer')
       })
 

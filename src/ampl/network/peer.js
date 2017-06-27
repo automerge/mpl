@@ -84,10 +84,10 @@ export default class Peer extends EventEmitter {
       this.data_channel.onmessage = (msg) => this.processMessage(msg)
       this.data_channel.onerror = e => this.notice("datachannel error",e)
       this.data_channel.onclose = () => this.notice("datachannel closed")
-      this.data_channel.onopen = () => this.notice("datachannel opened")
-
-      console.log("Received a data channel and it opened.")
-      this.emit('connect')
+      this.data_channel.onopen = () => { 
+        this.notice("datachannel opened")
+        this.emit('connect')
+      }
     }
 
     this.webrtc = webrtc

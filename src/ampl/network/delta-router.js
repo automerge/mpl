@@ -72,17 +72,28 @@ export default class DeltaRouter {
         // and if we get a vector clock, send the peer anything they're missing
         if (m.vectorClock) { // ignore acks for all but the last send
           console.log("got vector clock from", peer.id, m.vectorClock)
-          this.clocks[peer.id] = this.clockMax(m.vectorClock, this.clocks[peer.id] || {})
 
-          if (this.aheadOf(peer)) {
+          // we maintain an estimated clock that assumes messages we sent will be applied by our peer
+          // POSSIBLE BUG: i haven't checked but this clock should be reset after reconnect but probably isn't!
+          //let theirEstimatedClock = this.clockMax(m.vectorClock, this.clocks[peer.id] || {})
+          let theirEstimatedClock = m.vectorClock // clock estimation disabled for now
+          let myClock = Tesseract.getVClock(state)
+
+          if (this.isAheadOf(myClock, theirEstimatedClock)) {
             console.log("We are ahead - send deltas",peer.id)
             this.sendDeltasToPeer(peer)
           }
 
-          if (this.behind(peer)) {
+          // it should be safe to use the estimated clock but for this purpose m.vectorClock would work too
+          if (this.isAheadOf(theirEstimatedClock, myClock)) {
             console.log("We are behind - request deltas",peer.id)
             this.sendVectorClockToPeer(peer)
           }
+
+          // update the clock after sending to prevent exceptions above from falsely moving our
+          // estimated peer clock forward
+          this.clocks[peer.id] = theirEstimatedClock
+
         }
       })
     })
@@ -112,10 +123,12 @@ export default class DeltaRouter {
     if (theirClock) {
       let deltas = Tesseract.getDeltasAfter(state, theirClock)
       if (deltas.length > 0) {
-        this.clocks[peer.id] = this.clockMax(myClock,theirClock)
         console.log("SEND DELTAS",deltas.length)
         // we definitely shuoldn't be passing "boardTitle" like this
         peer.send({docId: state.docId, docTitle: state.boardTitle, vectorClock: myClock, deltas:deltas})
+        
+        // update our estimate of their clock to assume the deltas we just sent will all arrive
+        this.clocks[peer.id] = this.clockMax(myClock,theirClock)
       }
     }
   }
@@ -128,25 +141,10 @@ export default class DeltaRouter {
     peer.send({ docId: state.docId, docTitle: state.boardTitle, vectorClock: myClock })
   }
 
-  behind(peer) {
-    let clock = this.clocks[peer.id]
-    let state = this.getTesseractCB()
-    let myClock = Tesseract.getVClock(state)
-    for (let i in clock) {
-      let a = clock[i]
-      let b = (myClock[i] || 0)
-      if (a > b) return true
-    }
-    return false
-  }
-
-  aheadOf(peer) {
-    let clock = this.clocks[peer.id]
-    let state = this.getTesseractCB()
-    let myClock = Tesseract.getVClock(state)
-    for (let i in myClock) {
-      let a = myClock[i]
-      let b = (clock[i] || 0)
+  isAheadOf(leftClock, rightClock) {
+    for (let i in leftClock) {
+      let a = leftClock[i]
+      let b = (rightClock[i] || 0)
       if (a > b) return true
     }
     return false

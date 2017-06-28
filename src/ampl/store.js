@@ -58,6 +58,7 @@ export default class Store {
         || action.type === "OPEN_DOCUMENT"
         || action.type === "FORK_DOCUMENT") {
           this.network.broadcastActiveDocId(this.state.docId)
+      if(this.deltaRouter) this.deltaRouter.broadcastVectorClock()
     }
 
     this.deltaRouter.broadcastState()

@@ -1,5 +1,5 @@
 import assert from 'assert'
-import aMPL from '../src/ampl'
+import MPL from '../src/mpl'
 import dotenv from 'dotenv'
 import wrtc from 'wrtc'
 import childProcess from 'child_process'
@@ -7,16 +7,16 @@ import childProcess from 'child_process'
 dotenv.config()
 
 function createStore() {
-  let store = new aMPL.Store((state, action) => {
+  let store = new MPL.Store((state, action) => {
     switch(action.type) {
       case "INCREMENT":
-        return aMPL.Tesseract.changeset(state, "INCREMENT", (doc) => {
+        return MPL.Automerge.changeset(state, "INCREMENT", (doc) => {
           doc.counter = (state.counter || 0) + 1
         })
       default:
         return state
     }
-  }, new aMPL.Network(wrtc))
+  }, new MPL.Network(wrtc))
 
   return store
 }
@@ -43,7 +43,7 @@ describe("Store", function() {
   it("allows you to overwrite default reducer actions", function() {
     let store = createStore()
     store.newDocument = (state, action) => {
-      return aMPL.Tesseract.changeset(state, (doc) => {
+      return MPL.Automerge.changeset(state, (doc) => {
         doc.foo = "bar"
       })
     }
@@ -97,7 +97,7 @@ describe.skip("Network", function() {
 
     let store = createStore()
 
-    aMPL.config.name = "Test Store"
+    MPL.config.name = "Test Store"
     store.dispatch({type: "OPEN_DOCUMENT", docId: "botcounter-abcd"})
 
     setTimeout(() => {

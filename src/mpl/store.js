@@ -1,4 +1,4 @@
-import Tesseract from 'tesseract'
+import Automerge from 'automerge'
 import fs from 'fs'
 import uuidv4 from 'uuid/v4'
 
@@ -9,12 +9,12 @@ import Config from './config'
 export default class Store {
   constructor(reducer, network) {
     this.reducer   = reducer
-    this.state     = this.tesseractInit()
+    this.state     = this.automergeInit()
     this.listeners = []
 
     this.network = network || new Network()
     this.network.connect({
-      // we use our tesseract session ID as the peer id,
+      // we use our automerge session ID as the peer id,
       // but we probably want to use the network ID for the document actorIds
       name: Config.name,
       peerId: this.state._state.get("actorId")
@@ -22,7 +22,7 @@ export default class Store {
     
     // the deltaRouter we have right now is per-document, so we need to reinitialize it for each new document.
     this.deltaRouter = new DeltaRouter(this.network.peergroup,
-      // use this.state so this.getState() can be monkeypatched outside of aMPL
+      // use this.state so this.getState() can be monkeypatched outside of Automesh
       () => this.state,
       (deltas) => {
         this.state = this.applyDeltas(this.state, deltas)
@@ -74,45 +74,45 @@ export default class Store {
   }
 
   getHistory() {
-    return Tesseract.getHistory(this.state)
+    return Automerge.getHistory(this.state)
   }
 
   save() {
-    return Tesseract.save(this.getState())
+    return Automerge.save(this.getState())
   }
 
   forkDocument(state, action) {
-    return Tesseract.changeset(state, { action: action }, (doc) => {
+    return Automerge.changeset(state, { action: action }, (doc) => {
       doc.docId = uuidv4()
     })
   }
 
   openDocument(state, action) {
-    let tesseract
+    let automerge
 
     if(action.file)
-      tesseract = Tesseract.load(action.file)
+      automerge = Automerge.load(action.file)
     else if(action.docId) {
-      tesseract = Tesseract.init()
-      tesseract = Tesseract.changeset(tesseract, { action: action }, (doc) => {
+      automerge = Automerge.init()
+      automerge = Automerge.changeset(automerge, { action: action }, (doc) => {
         doc.docId = action.docId
       })
     }
 
-    return tesseract
+    return automerge
   }
 
   mergeDocument(state, action) {
-    let otherTesseract = Tesseract.load(action.file)
-    return Tesseract.merge(state, otherTesseract)
+    let otherAutomerge = Automerge.load(action.file)
+    return Automerge.merge(state, otherAutomerge)
   }
 
   applyDeltas(state, deltas) {
-    return Tesseract.applyDeltas(state, deltas)
+    return Automerge.applyDeltas(state, deltas)
   }
 
   newDocument(state, action) {
-    return this.tesseractInit()
+    return this.automergeInit()
   }
 
   removeAllListeners() {
@@ -123,12 +123,12 @@ export default class Store {
     return this.network.getPeerDocs()
   }
 
-  tesseractInit() {
-    let tesseract = new Tesseract.init()
-    tesseract = Tesseract.changeset(tesseract, "new document", (doc) => {
+  automergeInit() {
+    let automerge = new Automerge.init()
+    automerge = Automerge.changeset(automerge, "new document", (doc) => {
       doc.docId = uuidv4()
     })
 
-    return tesseract
+    return automerge
   }
 }

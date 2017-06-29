@@ -62,7 +62,7 @@ export default class BonjourSignaller extends EventEmitter {
   // in addition to manually introducing ourselves, we can also check published bonjour
   // postings for services that match what we're looking for.
   searchBonjour() {
-    this.browser = bonjour.find({ type: 'ampl' },
+    this.browser = bonjour.find({ type: 'automesh' },
       (service) => {
         let me = this.peergroup.self()
 
@@ -87,8 +87,8 @@ export default class BonjourSignaller extends EventEmitter {
     // bonjour downcases keynames.
     console.log(me)
     let text = {session: me.id, name: me.name}
-    let publish = { name: 'ampl-'+ me.id, type: 'ampl', port: this.PORT, txt: text };
-    console.log("publishBonjour():",  'ampl-'+ me.id, "type:", 'ampl', "port:", this.PORT, "txt:", JSON.stringify(text).split('\n').join(' '))
+    let publish = { name: 'automesh-'+ me.id, type: 'automesh', port: this.PORT, txt: text };
+    console.log("publishBonjour():",  'automesh-'+ me.id, "type:", 'automesh', "port:", this.PORT, "txt:", JSON.stringify(text).split('\n').join(' '))
     this.service = bonjour.publish(publish)
   }
 

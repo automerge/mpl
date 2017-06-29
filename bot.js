@@ -1,22 +1,22 @@
-let ampl = require('./lib/ampl')
+let mpl = require('./lib/mpl')
 let wrtc = require('wrtc')
 
 // XXX: why do i need .default in this file?
 
 let fieldName = (process.env.NAME || 'anonybot') + Math.floor(Math.random() * 1000)
-ampl.default.config.name = fieldName // ugh
+mpl.default.config.name = fieldName // ugh
 
-let store = new ampl.default.Store(
+let store = new mpl.default.Store(
     (state, action) => {
       switch(action.type) {
         case "INCREMENT_COUNTER":
-          return ampl.default.Tesseract.changeset(state, "increment counter", (doc) => {
+          return mpl.default.Automerge.changeset(state, "increment counter", (doc) => {
             doc[fieldName] = (state[fieldName] || 0) + 1
           })
         default:
           return state
       }
-    }, new ampl.default.Network(wrtc))
+    }, new mpl.default.Network(wrtc))
 
 store.dispatch({ type: "OPEN_DOCUMENT", docId: "botcounter" })
 

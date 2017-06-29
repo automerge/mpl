@@ -1,12 +1,12 @@
 {
-  "name": "automerge",
+  "name": "mpl",
   "version": "0.2.26",
-  "main": "lib/ampl",
+  "main": "lib/mpl",
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "scripts": {
     "compile": "babel src --out-dir lib",
-    "test": "mocha --compilers js:babel-core/register test/ampl.js",
+    "test": "mocha --compilers js:babel-core/register test/mpl.js",
     "watch": "babel src --watch --out-dir lib"
   },
   "babel": {
@@ -21,7 +21,7 @@
     "dotenv": "^4.0.0",
     "express": "^4.15.3",
     "lz4": "^0.5.3",
-    "tesseract": "git+ssh://git@github.com/inkandswitch/tesseract.git#v0.4.1",
+    "automerge": "^0.4.1",
     "uuid": "^3.0.1",
     "ws": "^3.0.0"
   },

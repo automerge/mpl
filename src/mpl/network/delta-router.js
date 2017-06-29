@@ -1,12 +1,12 @@
 
 import PeerGroup from './peergroup'
-import Tesseract from 'tesseract'
+import Automerge from 'automerge'
 
 export default class DeltaRouter {
-  constructor(peergroup, getTesseractCB, applyTesseractDeltasCB) {
+  constructor(peergroup, getAutomergeCB, applyAutomergeDeltasCB) {
     this.peergroup = peergroup;
-    this.getTesseractCB = getTesseractCB;
-    this.applyTesseractDeltasCB = applyTesseractDeltasCB;
+    this.getAutomergeCB = getAutomergeCB;
+    this.applyAutomergeDeltasCB = applyAutomergeDeltasCB;
 
     this.clocks = {}
 
@@ -60,7 +60,7 @@ export default class DeltaRouter {
     })
 
     peer.on('message', (m) => {
-      let state = this.getTesseractCB()
+      let state = this.getAutomergeCB()
 
       // right now we only care about a single docId
       if (m.docId != state.docId) {
@@ -70,7 +70,7 @@ export default class DeltaRouter {
       // try and apply deltas we receive
       if (m.deltas && m.deltas.length > 0) {
         console.log("APPLY DELTAS",m.deltas.length)
-        this.applyTesseractDeltasCB(m.deltas)
+        this.applyAutomergeDeltasCB(m.deltas)
         this.broadcastVectorClock()
       }
 
@@ -82,7 +82,7 @@ export default class DeltaRouter {
         // POSSIBLE BUG: i haven't checked but this clock should be reset after reconnect but probably isn't!
         //let theirEstimatedClock = this.clockMax(m.vectorClock, this.clocks[peer.id] || {})
         let theirEstimatedClock = m.vectorClock // clock estimation disabled for now
-        let myClock = Tesseract.getVClock(state)
+        let myClock = Automerge.getVClock(state)
 
         if (this.isAheadOf(myClock, theirEstimatedClock)) {
           console.log("We are ahead - send deltas",peer.id)
@@ -120,12 +120,12 @@ export default class DeltaRouter {
 
   sendDeltasToPeer(peer) {
     console.log("maybe send deltas")
-    let state = this.getTesseractCB()
-    let myClock = Tesseract.getVClock(state)
+    let state = this.getAutomergeCB()
+    let myClock = Automerge.getVClock(state)
     let theirClock = this.clocks[peer.id];
 
     if (theirClock) {
-      let deltas = Tesseract.getDeltasAfter(state, theirClock)
+      let deltas = Automerge.getDeltasAfter(state, theirClock)
       if (deltas.length > 0) {
         console.log("SEND DELTAS",deltas.length)
         // we definitely shuoldn't be passing "boardTitle" like this
@@ -138,8 +138,8 @@ export default class DeltaRouter {
   }
 
   sendVectorClockToPeer(peer) {
-    let state = this.getTesseractCB()
-    let myClock = Tesseract.getVClock(state)
+    let state = this.getAutomergeCB()
+    let myClock = Automerge.getVClock(state)
     console.log("send vector clock to peer",myClock)
     // we definitely shuoldn't be passing "boardTitle" like this
     peer.send({ docId: state.docId, docTitle: state.boardTitle, vectorClock: myClock })
@@ -154,7 +154,7 @@ export default class DeltaRouter {
     return false
   }
 
-  /* This should probably be a feature of Tesseract */
+  /* This should probably be a feature of Automerge */
   clockMax(clock1, clock2) {
     let maxclock  = {}
     let keys      = Object.keys(clock1).concat(Object.keys(clock2))

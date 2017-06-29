@@ -1,4 +1,4 @@
-# aMPL
+# MPL
 a Magic Persistence Layer
 
 - [Guide](#guide)
@@ -9,7 +9,7 @@ a Magic Persistence Layer
 
 ## Guide
 
-This guide will demonstrate how to create a basic counter app using Electron, React, and aMPL. First, start by creating a new Electron app using Electron Forge with the React template.
+This guide will demonstrate how to create a basic counter app using Electron, React, and MPL. First, start by creating a new Electron app using Electron Forge with the React template.
 
 ```bash
 $ npm install -g electron-forge
@@ -17,26 +17,26 @@ $ electron-forge init demo --template=react
 $ cd demo
 ```
 
-Now, install aMPL:
+Now, install MPL:
 
 ```bash
-$ npm install --save git+ssh://git@github.com/inkandswitch/ampl.git
+$ npm install --save git+ssh://git@github.com/inkandswitch/mpl.git
 ```
 
-In `src/app.jsx`, initialize the aMPL store and add the counter to the view:
+In `src/app.jsx`, initialize the MPL store and add the counter to the view:
 
 ```js
 import React from 'react'
-import aMPL from 'ampl'
+import MPL from 'mpl'
 
 export default class App extends React.Component {
   constructor() {
     super()
 
-    this.store = new aMPL.Store((state, action) => {
+    this.store = new MPL.Store((state, action) => {
       switch(action.type) {
         case "INCREMENT_COUNTER":
-          return aMPL.Tesseract.changeset(state, "increment counter", (doc) => {
+          return MPL.Automerge.changeset(state, "increment counter", (doc) => {
             doc.counter = (state.counter || 0) + 1
           })
         default:
@@ -79,7 +79,7 @@ The `Store` class is modeled off of [Redux](http://redux.js.org/) and follows th
 
 #### `new Store(reducer)`
 
-Constructor that accepts a reducer function. When an action is dispatched to the store, it first checks against aMPL's provided reducer actions and then invokes your reducer if the action did not map to any of the provided ones.
+Constructor that accepts a reducer function. When an action is dispatched to the store, it first checks against MPL's provided reducer actions and then invokes your reducer if the action did not map to any of the provided ones.
 
 #### `getState()`
 
@@ -126,7 +126,7 @@ Returns a JSON serialization of your store's state. This is useful for persistin
 
 ### Provided Actions
 
-`aMPL.Store` provides several built-in actions to create, open, and merge documents. All document management should go through your `aMPL.Store` instance so that aMPL can connect to the right peer group and broadcast state changes over the network.
+`MPL.Store` provides several built-in actions to create, open, and merge documents. All document management should go through your `MPL.Store` instance so that MPL can connect to the right peer group and broadcast state changes over the network.
 
 #### `"NEW_DOCUMENT"`
 
@@ -142,7 +142,7 @@ this.store.dispatch({
 
 #### `"OPEN_DOCUMENT"`
 
-Opens a new document. Accepts a `docId` or `file` blob as parameters (i.e. the serialized output from `aMPL.Store#save()`. 
+Opens a new document. Accepts a `docId` or `file` blob as parameters (i.e. the serialized output from `MPL.Store#save()`. 
 
 **Ex:**
 
@@ -168,7 +168,7 @@ this.store.dispatch({
 
 ### Compiling
 
-aMPL is configured via Babel to use ES2016 syntax. The source code is located in `src` and compiled code in `lib`. Make sure to compile and commit before creating a new release:
+MPL is configured via Babel to use ES2016 syntax. The source code is located in `src` and compiled code in `lib`. Make sure to compile and commit before creating a new release:
 
 ```bash
 $ npm run compile

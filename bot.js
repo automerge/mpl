@@ -1,10 +1,9 @@
 let mpl = require('./lib/mpl')
 let wrtc = require('wrtc')
 
-// XXX: why do i need .default in this file?
-
 let fieldName = (process.env.NAME || 'anonybot') + Math.floor(Math.random() * 1000)
 mpl.default.config.name = fieldName // ugh
+let docId = process.env.DOC_ID || "botcounter"
 
 let store = new mpl.default.Store(
     (state, action) => {
@@ -18,7 +17,9 @@ let store = new mpl.default.Store(
       }
     }, new mpl.default.Network(wrtc))
 
-store.dispatch({ type: "OPEN_DOCUMENT", docId: "botcounter" })
+store.dispatch({ type: "OPEN_DOCUMENT", docId: docId })
+
+store.network.signaler.manualHello("192.168.0.110", "3952")
 
 if (process.env.REMOTEHOST) {
   store.network.signaler.manualHello(process.env.REMOTEHOST, process.env.REMOTEPORT)

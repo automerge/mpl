@@ -1,5 +1,7 @@
 # MPL
-a Magic Persistence Layer
+Build cloud apps without needing cloud infrastructure. 
+
+Magic Persistence Layer is a WebRTC peer-to-peer synchronization system for automerge documents.
 
 - [Guide](#guide)
 - [API](#api)
@@ -20,7 +22,7 @@ $ cd demo
 Now, install MPL:
 
 ```bash
-$ npm install --save git+ssh://git@github.com/inkandswitch/mpl.git
+$ npm install --save mpl
 ```
 
 In `src/app.jsx`, initialize the MPL store and add the counter to the view:
@@ -126,7 +128,7 @@ Returns a JSON serialization of your store's state. This is useful for persistin
 
 ### Provided Actions
 
-`MPL.Store` provides several built-in actions to create, open, and merge documents. All document management should go through your `MPL.Store` instance so that MPL can connect to the right peer group and broadcast state changes over the network.
+`MPL.Store` provides several built-in actions to create, open, and merge documents. All document management should go through your `MPL.Store` instance so that aMPL can connect to the right peer group and broadcast state changes over the network.
 
 #### `"NEW_DOCUMENT"`
 

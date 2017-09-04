@@ -1,13 +1,16 @@
 import Peer from './peer'
 import EventEmitter from 'events'
+import Automerge from 'automerge'
 
 export default class PeerGroup extends EventEmitter {
-  constructor(wrtc) {
+  constructor(docSet, wrtc) {
     super()
 
-    this.wrtc = wrtc;
+    this.docSet = docSet
+    this.wrtc = wrtc
 
     this.Peers        = {}
+    this.connections  = {}
     this.processSignal = this.processSignal.bind(this)
   }
 
@@ -34,23 +37,26 @@ export default class PeerGroup extends EventEmitter {
   }
 
   getOrCreatePeer(id, name, handler) {
-    if(!this.Peers[id]) {
+    if (!this.Peers[id]) {
       let peer = new Peer(id, name, handler, this.wrtc)
-      peer.on('closed', () => {
-        delete this.Peers[peer.id]
-      })
       this.Peers[id] = peer
+      this.connections[id] = new Automerge.Connection(this.docSet, msg => peer.send(msg))
+
+      peer.on('message', msg => {
+        this.connections[id].receiveMsg(msg)
+      })
+
+      peer.on('closed', () => {
+        this.connections[id].close()
+        delete this.connections[id]
+        delete this.Peers[id]
+      })
+
+      this.connections[id].open()
       this.emit("peer", peer)
     }
-    return this.Peers[id]
-  }
 
-  setName(name) {
-    this.peers().forEach((peer) => {
-      peer.send({name: name})
-    })
-    this.self().name = name
-    this.self().emit('rename',name)
+    return this.Peers[id]
   }
 
   processSignal(msg, signal, handler) {

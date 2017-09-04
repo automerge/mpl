@@ -7,10 +7,10 @@ import EventEmitter from 'events'
 import config from './config'
 
 export default class Network extends EventEmitter {
-  constructor(wrtc) {
+  constructor(docSet, wrtc) {
     super()
 
-    this.peergroup = new PeerGroup(wrtc)
+    this.peergroup = new PeerGroup(docSet, wrtc)
 
     this.signaler = new BonjourSignaler(this.peergroup)
     this.webRTCSignaler = new WebRTCSignaler(this.peergroup)

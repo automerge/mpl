@@ -40,9 +40,13 @@ export default class PeerGroup extends EventEmitter {
     if (!this.Peers[id]) {
       let peer = new Peer(id, name, handler, this.wrtc)
       this.Peers[id] = peer
-      this.connections[id] = new Automerge.Connection(this.docSet, msg => peer.send(msg))
+      this.connections[id] = new Automerge.Connection(this.docSet, msg => {
+        console.log('send to ' + id + ':', msg)
+        peer.send(msg)
+      })
 
       peer.on('message', msg => {
+        console.log('receive from ' + id + ':', msg)
         this.connections[id].receiveMsg(msg)
       })
 

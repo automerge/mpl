@@ -10,6 +10,15 @@ export default class Peer extends EventEmitter {
     this.name         = name
     this.self         = (send_signal == undefined)
     this.send_signal  = send_signal
+    this.queue        = []
+
+    this.on('connect', () => {
+      if (this.connected()) {
+        while (this.queue.length > 0) {
+          this.send(this.queue.shift())
+        }
+      }
+    })
 
     // we're in electron/browser
     if (typeof window != 'undefined') {
@@ -148,7 +157,10 @@ export default class Peer extends EventEmitter {
 
   send(message) {
     if (this.self) return; // dont send messages to ourselves
-    if (!this.connected()) return; // don't send to unconnected partners.
+    if (!this.connected()) { // don't send to unconnected partners.
+      this.queue.push(message)
+      return
+    }
 
     var buffer = new Buffer(JSON.stringify(message), 'utf8')
     var compressed = lz4.encode(buffer);

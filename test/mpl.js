@@ -10,7 +10,7 @@ function createStore() {
   let store = new MPL.Store((state, action) => {
     switch(action.type) {
       case "INCREMENT":
-        return MPL.Automerge.changeset(state, "INCREMENT", (doc) => {
+        return MPL.Automerge.change(state, "INCREMENT", (doc) => {
           doc.counter = (state.counter || 0) + 1
         })
       default:
@@ -43,7 +43,7 @@ describe("Store", function() {
   it("allows you to overwrite default reducer actions", function() {
     let store = createStore()
     store.newDocument = (state, action) => {
-      return MPL.Automerge.changeset(state, (doc) => {
+      return MPL.Automerge.change(state, (doc) => {
         doc.foo = "bar"
       })
     }
@@ -68,20 +68,20 @@ describe("Store", function() {
 })
 
 describe("getHistory()", function() {
-  it("returns the store's changeset history", function() {
+  it("returns the store's change history", function() {
     let store = createStore()
     assert.equal(store.getHistory().length, 1)
-    assert.equal(store.getHistory()[0].changeset.message, "new document")
+    assert.equal(store.getHistory()[0].change.message, "new document")
 
     store.dispatch({ type: "INCREMENT" })
     assert.deepEqual(store.getHistory().length, 2)
-    assert.equal(store.getHistory()[1].changeset.message, "INCREMENT")
+    assert.equal(store.getHistory()[1].change.message, "INCREMENT")
   })
 
   it("returns the action data for forkDocument", function() {
     let store = createStore()
     store.dispatch({ type: "FORK_DOCUMENT" })
-    assert.deepEqual(store.getHistory()[1].changeset.message.action.type, "FORK_DOCUMENT")
+    assert.deepEqual(store.getHistory()[1].change.message.action.type, "FORK_DOCUMENT")
   })
 })
 

@@ -38,7 +38,7 @@ export default class App extends React.Component {
     this.store = new MPL.Store((state, action) => {
       switch(action.type) {
         case "INCREMENT_COUNTER":
-          return MPL.Automerge.changeset(state, "increment counter", (doc) => {
+          return MPL.Automerge.change(state, "increment counter", (doc) => {
             doc.counter = (state.counter || 0) + 1
           })
         default:
@@ -89,7 +89,7 @@ Returns the current state object including all of your persisted data.
 
 #### `getHistory()`
 
-Returns the changeset history from the state.
+Returns the change history from the state.
 
 **Ex:**
 
@@ -97,7 +97,7 @@ Returns the changeset history from the state.
 store.getHistory()
 => [
   {
-    "changeset": {
+    "change": {
       "actor": "61d8b814-463c-4092-b71d-7137873840e4",
       "seq": 1,
       "deps": {},

@@ -9,7 +9,7 @@ let store = new mpl.default.Store(
     (state, action) => {
       switch(action.type) {
         case "INCREMENT_COUNTER":
-          return mpl.default.Automerge.changeset(state, "increment counter", (doc) => {
+          return mpl.default.Automerge.change(state, "increment counter", (doc) => {
             doc[fieldName] = (state[fieldName] || 0) + 1
           })
         default:

@@ -1,5 +1,7 @@
 import lz4 from 'lz4'
+import sodium from 'libsodium-wrappers'
 import EventEmitter from 'events'
+import config from '../config'
 
 export default class Peer extends EventEmitter {
   // XXX todo: cleanup passing args
@@ -148,8 +150,13 @@ export default class Peer extends EventEmitter {
   }
 
   processMessage(msg) {
-    var decompressed = lz4.decode(Buffer.from(msg.data, 'base64'));
-    var data = decompressed.toString('utf8');
+    if (!config.encryptionKey) throw 'Please configure an encryption key'
+    var encrypted = Buffer.from(msg.data, 'base64');
+    var decrypted = Buffer.from(sodium.crypto_secretbox_open_easy(
+      encrypted.slice(sodium.crypto_box_NONCEBYTES),
+      encrypted.slice(0, sodium.crypto_box_NONCEBYTES),
+      Buffer.from(config.encryptionKey, 'hex'), 'uint8array'));
+    var data = lz4.decode(decrypted).toString('utf8');
 
     let message = JSON.parse(data)
     this.emit('message',message)
@@ -164,7 +171,13 @@ export default class Peer extends EventEmitter {
 
     var buffer = new Buffer(JSON.stringify(message), 'utf8')
     var compressed = lz4.encode(buffer);
-    this.data_channel.send(compressed.toString('base64'))
+
+    if (!config.encryptionKey) throw 'Please configure an encryption key'
+    var secret = Buffer.from(config.encryptionKey, 'hex');
+    var nonce = Buffer.from(sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES));
+    var encrypted = Buffer.concat([nonce, Buffer.from(sodium.crypto_secretbox_easy(compressed, nonce, secret))]);
+
+    this.data_channel.send(encrypted.toString('base64'))
     this.emit('sent', message)
   }
 }

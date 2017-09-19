@@ -76,7 +76,7 @@ export default class Store {
   }
 
   forkDocument(state, action) {
-    return Automerge.changeset(state, { action: action }, (doc) => {
+    return Automerge.change(state, { action: action }, (doc) => {
       doc.docId = uuidv4()
     })
   }
@@ -88,7 +88,7 @@ export default class Store {
       let doc = this.docSet.getDoc(action.docId)
       if (doc) return doc
 
-      return Automerge.changeset(Automerge.init(), { action: action }, (doc) => {
+      return Automerge.change(Automerge.init(), { action: action }, (doc) => {
         doc.docId = action.docId
       })
     }
@@ -99,7 +99,7 @@ export default class Store {
   }
 
   newDocument(state, action) {
-    return Automerge.changeset(Automerge.init(), "new document", (doc) => {
+    return Automerge.change(Automerge.init(), "new document", (doc) => {
       doc.docId = uuidv4()
     })
   }

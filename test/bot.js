@@ -8,7 +8,7 @@ require("dotenv").config()
 let store = new mpl.Store((state, action) => {
   switch(action.type) {
     case "INCREMENT_COUNTER":
-      return mpl.default.Automerge.changeset(state, "increment counter", (doc) => {
+      return mpl.default.Automerge.change(state, "increment counter", (doc) => {
         doc.counter = (state.counter || 0) + 1
       })
     default:

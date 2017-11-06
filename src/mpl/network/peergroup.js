@@ -91,11 +91,11 @@ export default class PeerGroup extends EventEmitter {
         this.room.sendTo(id, msg)
       })
 
-      peer.on('closed', () => {
+      /*peer.on('closed', () => {
         this.connections[id].close()
         delete this.connections[id]
         delete this.Peers[id]
-      })
+      })*/
 
       this.connections[id].open()
       this.emit("peer", id)

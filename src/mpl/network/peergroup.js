@@ -29,7 +29,6 @@ export default class PeerGroup extends EventEmitter {
 
     this.Peers        = {}
     this.connections  = {}
-    this.processSignal = this.processSignal.bind(this)
   }
 
   join(session, name) {
@@ -47,16 +46,20 @@ export default class PeerGroup extends EventEmitter {
     
       room.on('peer joined', (peer) => {
         console.log('peer ' + peer + ' joined')
-        this.Peers[peer] = peer
+        this.getOrCreatePeer(ipfsid, ipfsid, undefined)
       })
       room.on('peer left', (peer) => {
         console.log('peer ' + peer + ' left')
         delete this.Peers[peer]
+        // this is wrong
       })
     
       // send and receive messages    
       room.on('peer joined', (peer) => room.sendTo(peer, 'Hello ' + peer + '!'))
-      room.on('message', (message) => console.log('got message from ' + message.from + ': ' + message.data.toString()))
+      room.on('message', (message) => {
+        console.log('got message from ' + message.from + ': ' + message.data.toString())
+        this.connections[message.from].receiveMsg(JSON.parse(msg.data.toString()))
+      })
     }))
 
     this.room = room
@@ -68,7 +71,6 @@ export default class PeerGroup extends EventEmitter {
 
   close() {
     for (let id in this.Peers) {
-      this.Peers[id].close()
       delete this.Peers[id]
     }
     ipfs.stop()
@@ -87,12 +89,7 @@ export default class PeerGroup extends EventEmitter {
       this.Peers[id] = peer
       this.connections[id] = new Automerge.Connection(this.docSet, msg => {
         console.log('send to ' + id + ':', msg)
-        peer.send(msg)
-      })
-
-      peer.on('message', msg => {
-        console.log('receive from ' + id + ':', msg)
-        this.connections[id].receiveMsg(msg)
+        this.room.sendTo(peer, msg)
       })
 
       peer.on('closed', () => {

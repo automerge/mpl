@@ -38,7 +38,7 @@ export default class PeerGroup extends EventEmitter {
 
     let room;
 
-    ipfs.once('ready', () => ipfs.id((err, info) => {
+    this.ipfs.once('ready', () => ipfs.id((err, info) => {
       if (err) { throw err }
       console.log('IPFS node ready with address ' + info.id)
     

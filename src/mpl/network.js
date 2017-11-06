@@ -8,7 +8,7 @@ import Room from 'ipfs-pubsub-room'
 import Automerge from 'automerge'
 
 export default class Network extends EventEmitter {
-  constructor(docSet, wrtc) {
+  constructor(docSet, wrtc) { // XXX: remove wrtc reference
     super()
 
     const ipfs = new IPFS({
@@ -29,6 +29,8 @@ export default class Network extends EventEmitter {
     this.connections = {}
 
     this.ipfs = ipfs
+
+    this.docSet = docSet
 
     this.connected = false
   }

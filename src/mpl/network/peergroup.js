@@ -84,7 +84,7 @@ export default class PeerGroup extends EventEmitter {
     if (!this.Peers[id]) {
       this.Peers[id] = name
       this.connections[id] = new Automerge.Connection(this.docSet, msg => {
-        console.log('Automerge.Connection> send to ' + id + ':', msg)
+        console.log('Automerge.Connection> send to ' + id + ':', JSON.stringify(msg))
         this.room.sendTo(id, msg)
       })
 

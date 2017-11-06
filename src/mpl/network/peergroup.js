@@ -36,32 +36,28 @@ export default class PeerGroup extends EventEmitter {
     // this has to happen after all the listeners register... which suggests
     // we have some kind of an antipattern going
 
-    let room;
-
     this.ipfs.once('ready', () => this.ipfs.id((err, info) => {
       if (err) { throw err }
       console.log('IPFS node ready with address ' + info.id)
     
-      room = Room(this.ipfs, 'ampl-experiment')
+      this.room = Room(this.ipfs, 'ampl-experiment')
     
-      room.on('peer joined', (peer) => {
+      this.room.on('peer joined', (peer) => {
         console.log('peer ' + peer + ' joined')
         this.getOrCreatePeer(info.id, info.id, undefined)
       })
-      room.on('peer left', (peer) => {
+      this.room.on('peer left', (peer) => {
         console.log('peer ' + peer + ' left')
         delete this.Peers[peer]
         // this is wrong
       })
     
       // send and receive messages    
-      room.on('message', (message) => {
+      this.room.on('message', (message) => {
         console.log('Automerge.Connection> receive ' + message.from + ': ' + message.data.toString())
         this.connections[message.from].receiveMsg(JSON.parse(msg.data.toString()))
       })
     }))
-
-    this.room = room
 
 /*    this.ipfs.id().then( (ipfsid) => {
       this.me = this.getOrCreatePeer(ipfsid, ipfsid, undefined)      

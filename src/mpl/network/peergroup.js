@@ -45,7 +45,7 @@ export default class PeerGroup extends EventEmitter {
       this.room.on('peer joined', (peer) => {
         console.log('peer ' + peer + ' joined')
         if (peer == info.id) { return }
-        this.getOrCreatePeer(info.id, info.id, undefined)
+        this.getOrCreatePeer(peer, peer, undefined)
       })
       this.room.on('peer left', (peer) => {
         console.log('peer ' + peer + ' left')

@@ -3,6 +3,9 @@ import PeerStats from './network/peer-stats'
 import EventEmitter from 'events'
 import config from './config'
 
+import IPFS from 'ipfs'
+import Room from 'ipfs-pubsub-room'
+
 export default class Network extends EventEmitter {
   constructor(docSet, wrtc) {
     super()

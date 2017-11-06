@@ -61,6 +61,8 @@ export default class Network extends EventEmitter {
       })
     }))
 
+    this.ipfs.start()
+
     this.connected = true
   }
 

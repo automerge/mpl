@@ -5,6 +5,7 @@ import config from './config'
 
 import IPFS from 'ipfs'
 import Room from 'ipfs-pubsub-room'
+import Automerge from 'automerge'
 
 export default class Network extends EventEmitter {
   constructor(docSet, wrtc) {

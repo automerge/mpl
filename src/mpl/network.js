@@ -74,7 +74,7 @@ export default class Network extends EventEmitter {
     console.log('Automerge.Connection> receive ' + message.from + ': ' + message.data.toString())
     this.Peers[message.from].receiveMsg(JSON.parse(message.data.toString()))
   }
-    
+
   broadcastActiveDocId(docId) {
     // todo: this.webRTCSignaler.broadcastActiveDocId(docId)
   }

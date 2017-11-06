@@ -24,6 +24,8 @@ export default class Network extends EventEmitter {
         ]}}
     })
 
+    this.Peers = {}
+
     this.ipfs = ipfs
 
     this.connected = false

@@ -1,5 +1,4 @@
 import EventEmitter from 'events'
-import config from './config'
 
 import IPFS from 'ipfs'
 import Room from 'ipfs-pubsub-room'
@@ -35,13 +34,8 @@ export default class Network extends EventEmitter {
     this.connected = false
   }
 
-  connect(config) {
+  connect() {
     if (this.connected) throw "network already connected - disconnect first"
-
-    // allow connect without a config to use the previous connect's config.
-    this.config = config || this.config
-
-    let name   = this.config.name || process.env.NAME
     
     this.ipfs.once('ready', () => this.ipfs.id((err, info) => {
       if (err) { throw err }

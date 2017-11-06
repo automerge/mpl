@@ -3,7 +3,6 @@ import fs from 'fs'
 import uuidv4 from 'uuid/v4'
 
 import Network from './network'
-import Config from './config'
 
 export default class Store {
   constructor(reducer, network) {
@@ -21,12 +20,7 @@ export default class Store {
     })
 
     this.network = network || new Network(this.docSet)
-    this.network.connect({
-      // we use our automerge session ID as the peer id,
-      // but we probably want to use the network ID for the document actorIds
-      name: Config.name,
-      peerId: this.state._state.get("actorId")
-    })
+    this.network.connect()
   }
 
   dispatch(action) {

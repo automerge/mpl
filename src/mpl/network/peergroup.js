@@ -64,9 +64,9 @@ export default class PeerGroup extends EventEmitter {
 
     this.room = room
 
-    ipfs.id().then( (ipfsid) => {
+/*    this.ipfs.id().then( (ipfsid) => {
       this.me = this.getOrCreatePeer(ipfsid, ipfsid, undefined)      
-    })
+    })*/
   }
 
   close() {

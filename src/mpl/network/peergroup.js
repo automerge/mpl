@@ -56,7 +56,7 @@ export default class PeerGroup extends EventEmitter {
       // send and receive messages    
       this.room.on('message', (message) => {
         console.log('Automerge.Connection> receive ' + message.from + ': ' + message.data.toString())
-        this.connections[message.from].receiveMsg(JSON.parse(msg.data.toString()))
+        this.connections[message.from].receiveMsg(JSON.parse(message.data.toString()))
       })
     }))
 

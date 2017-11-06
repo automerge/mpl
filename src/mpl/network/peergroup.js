@@ -1,11 +1,48 @@
 import Peer from './peer'
 import EventEmitter from 'events'
 import Automerge from 'automerge'
+const IPFS = require('ipfs')
+const Room = require('ipfs-pubsub-room')
 
 export default class PeerGroup extends EventEmitter {
   constructor(docSet, wrtc) {
     super()
 
+    const ipfs = new IPFS({
+      repo: 'ipfs/pubsub-demo/' + Math.random(),
+      EXPERIMENTAL: {
+        pubsub: true
+      },
+      config: {
+        "Addresses": {
+          "API": "",
+          "Gateway": "",
+          "Swarm": [
+            "/ip4/0.0.0.0/tcp/0",
+        ]}}
+    })
+    
+    ipfs.once('ready', () => ipfs.id((err, info) => {
+      if (err) { throw err }
+      console.log('IPFS node ready with address ' + info.id)
+    
+      const room = Room(ipfs, 'ampl-experiment')
+    
+      room.on('peer joined', (peer) => console.log('peer ' + peer + ' joined'))
+      room.on('peer left', (peer) => console.log('peer ' + peer + ' left'))
+    
+      // send and receive messages
+    
+      room.on('peer joined', (peer) => room.sendTo(peer, 'Hello ' + peer + '!'))
+      room.on('message', (message) => console.log('got message from ' + message.from + ': ' + message.data.toString()))
+    
+      // broadcast message every 2 seconds
+    
+      setInterval(() => room.broadcast('hey everyone!'), 2000)
+    }))
+
+    this.ipfs = ipfs
+    
     this.docSet = docSet
     this.wrtc = wrtc
 

@@ -1,6 +1,8 @@
 let mpl = require('./lib/mpl')
 let wrtc = require('wrtc')
 
+console.log('wrtc:', wrtc)
+
 let fieldName = (process.env.NAME || 'anonybot') + Math.floor(Math.random() * 1000)
 mpl.default.config.name = fieldName // ugh
 let docId = process.env.DOC_ID || "botcounter"

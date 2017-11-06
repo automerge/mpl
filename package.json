@@ -1,6 +1,6 @@
 {
   "name": "mpl",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "lib/mpl",
   "author": "",
   "license": "MIT",
@@ -21,6 +21,8 @@
     "debug": "^2.6.8",
     "dotenv": "^4.0.0",
     "express": "^4.15.3",
+    "ipfs": "^0.26.0",
+    "ipfs-pubsub-room": "^0.5.0",
     "lz4": "^0.5.3",
     "uuid": "^3.0.1",
     "ws": "^3.0.0"

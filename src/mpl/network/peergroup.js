@@ -21,25 +21,6 @@ export default class PeerGroup extends EventEmitter {
             "/ip4/0.0.0.0/tcp/0",
         ]}}
     })
-    
-    ipfs.once('ready', () => ipfs.id((err, info) => {
-      if (err) { throw err }
-      console.log('IPFS node ready with address ' + info.id)
-    
-      const room = Room(ipfs, 'ampl-experiment')
-    
-      room.on('peer joined', (peer) => console.log('peer ' + peer + ' joined'))
-      room.on('peer left', (peer) => console.log('peer ' + peer + ' left'))
-    
-      // send and receive messages
-    
-      room.on('peer joined', (peer) => room.sendTo(peer, 'Hello ' + peer + '!'))
-      room.on('message', (message) => console.log('got message from ' + message.from + ': ' + message.data.toString()))
-    
-      // broadcast message every 2 seconds
-    
-      setInterval(() => room.broadcast('hey everyone!'), 2000)
-    }))
 
     this.ipfs = ipfs
     
@@ -55,7 +36,34 @@ export default class PeerGroup extends EventEmitter {
     // add ourselves to the peers list with a do-nothing signaller
     // this has to happen after all the listeners register... which suggests
     // we have some kind of an antipattern going
-    this.me = this.getOrCreatePeer(session, name, undefined)
+
+    let room;
+
+    ipfs.once('ready', () => ipfs.id((err, info) => {
+      if (err) { throw err }
+      console.log('IPFS node ready with address ' + info.id)
+    
+      room = Room(ipfs, 'ampl-experiment')
+    
+      room.on('peer joined', (peer) => {
+        console.log('peer ' + peer + ' joined')
+        this.Peers[peer] = peer
+      })
+      room.on('peer left', (peer) => {
+        console.log('peer ' + peer + ' left')
+        delete this.Peers[peer]
+      })
+    
+      // send and receive messages    
+      room.on('peer joined', (peer) => room.sendTo(peer, 'Hello ' + peer + '!'))
+      room.on('message', (message) => console.log('got message from ' + message.from + ': ' + message.data.toString()))
+    }))
+
+    this.room = room
+
+    ipfs.id().then( (ipfsid) => {
+      this.me = this.getOrCreatePeer(ipfsid, ipfsid, undefined)      
+    })
   }
 
   close() {
@@ -63,6 +71,7 @@ export default class PeerGroup extends EventEmitter {
       this.Peers[id].close()
       delete this.Peers[id]
     }
+    ipfs.stop()
   }
 
   peers() {
@@ -75,7 +84,6 @@ export default class PeerGroup extends EventEmitter {
 
   getOrCreatePeer(id, name, handler) {
     if (!this.Peers[id]) {
-      let peer = new Peer(id, name, handler, this.wrtc)
       this.Peers[id] = peer
       this.connections[id] = new Automerge.Connection(this.docSet, msg => {
         console.log('send to ' + id + ':', msg)
@@ -98,35 +106,5 @@ export default class PeerGroup extends EventEmitter {
     }
 
     return this.Peers[id]
-  }
-
-  processSignal(msg, signal, handler) {
-    let id = msg.session
-    if (!id) throw new Error("Tried to process a signal that had no peer ID")
-    let name = msg.name
-    
-    let peer;
-    switch(msg.action) {
-      case "hello":
-        // on a "hello" we throw out the peer
-        if (this.Peers[id]) console.log("ALREADY HAVE A PEER UNDERWAY - NEW HELLO - RESET",id)
-        delete this.Peers[id]
-        peer = this.getOrCreatePeer(id, name, handler);
-        peer.establishDataChannel();
-        break;
-      case "offer":
-        // on an "offer" we can create a peer if we don't have one
-        // but this is might get wonky, since it could be a peer that's trying to reconnect 
-        peer = this.getOrCreatePeer(id, name, handler);
-        peer.handleSignal(signal)
-        break;
-      case "reply":
-        peer = this.Peers[id] // we definitely don't want replies for unknown peers.
-        if (!peer) throw "Received an offer or a reply for a peer we don't have registered."
-        peer.handleSignal(signal)
-        break;
-      default:
-        throw new Error("Unrecognized signal:", signal)
-    }
   }
 }

@@ -55,7 +55,6 @@ export default class PeerGroup extends EventEmitter {
       })
     
       // send and receive messages    
-      room.on('peer joined', (peer) => room.sendTo(peer, 'Hello ' + peer + '!'))
       room.on('message', (message) => {
         console.log('Automerge.Connection> receive ' + message.from + ': ' + message.data.toString())
         this.connections[message.from].receiveMsg(JSON.parse(msg.data.toString()))
@@ -89,7 +88,7 @@ export default class PeerGroup extends EventEmitter {
       this.Peers[id] = name
       this.connections[id] = new Automerge.Connection(this.docSet, msg => {
         console.log('Automerge.Connection> send to ' + id + ':', msg)
-        this.room.sendTo(peer, msg)
+        this.room.sendTo(id, msg)
       })
 
       peer.on('closed', () => {
@@ -99,7 +98,7 @@ export default class PeerGroup extends EventEmitter {
       })
 
       this.connections[id].open()
-      this.emit("peer", peer)
+      this.emit("peer", id)
     }
 
     return this.Peers[id]

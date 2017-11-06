@@ -36,9 +36,6 @@ export default class Network extends EventEmitter {
     this.config = config || this.config
 
     let name   = this.config.name || process.env.NAME
-
-    if (!peerId) throw new Error("peerId required, not found in config")
-    
     
     this.ipfs.once('ready', () => this.ipfs.id((err, info) => {
       if (err) { throw err }

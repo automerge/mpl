@@ -26,6 +26,10 @@ export default class Network extends EventEmitter {
     })
 
     this.Peers = {}
+    this.peerMetadata = {}
+
+    this.selfInfo = null;
+    this.name = 'Unset Name'
 
     this.ipfs = ipfs
 
@@ -72,7 +76,37 @@ export default class Network extends EventEmitter {
 
   message(message) {
     console.log('Automerge.Connection> receive ' + message.from + ': ' + message.data.toString())
-    this.Peers[message.from].receiveMsg(JSON.parse(message.data.toString()))
+    let contents = JSON.parse(message.data.toString());
+    if (contents.metadata) {
+      this.receivePeerMetadata()
+    }
+    // we'll send this message to automerge too, just in case there are clocks or deltas included with it
+    this.Peers[message.from].receiveMsg(contents)
+  }
+
+  generatePeerMetadata() {
+    return { metadata: {
+      name: this.name,
+      // xxx: todo: docid
+    }}
+  }
+
+  setName(name) {
+    this.name = name
+  }
+
+  broadcastPeerMetadata() {
+    this.room.broadcast(JSON.stringify(this.generatePeerMetadata()))
+  }
+
+  sendPeerMetadata(peer) {
+    this.room.sendTo(peer, JSON.stringify(this.generatePeerMetadata()))
+  }
+
+  receivePeerMetadata(message, contents) {
+    console.log("Received a peer metadata update from ", message.from)
+    // TODO: input validation...
+    this.peerMetadata[message.from] = contents
   }
 
   broadcastActiveDocId(docId) {

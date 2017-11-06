@@ -8,7 +8,7 @@ export default class Network extends EventEmitter {
   // TODO: reimplement 
   //  - friendly user names
   //  - multiple document support
-  constructor(docSet, wrtc) { // XXX: remove wrtc reference
+  constructor(docSet) {
     super()
 
     const ipfs = new IPFS({

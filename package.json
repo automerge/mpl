@@ -16,22 +16,15 @@
   },
   "dependencies": {
     "automerge": "^0.5.0",
-    "body-parser": "^1.17.2",
-    "bonjour": "^3.5.0",
     "debug": "^2.6.8",
     "dotenv": "^4.0.0",
-    "express": "^4.15.3",
     "ipfs": "^0.26.0",
-    "ipfs-pubsub-room": "^0.5.0",
-    "lz4": "^0.5.3",
-    "uuid": "^3.0.1",
-    "ws": "^3.0.0"
+    "ipfs-pubsub-room": "^0.5.0"
   },
   "devDependencies": {
     "babel-cli": "6.24.1",
     "babel-preset-env": "1.5.1",
     "babel-register": "6.24.1",
-    "mocha": "3.4.2",
-    "wrtc": "0.0.62"
+    "mocha": "3.4.2"
   }
 }

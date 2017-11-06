@@ -6,6 +6,9 @@ import Room from 'ipfs-pubsub-room'
 import Automerge from 'automerge'
 
 export default class Network extends EventEmitter {
+  // TODO: reimplement 
+  //  - friendly user names
+  //  - multiple document support
   constructor(docSet, wrtc) { // XXX: remove wrtc reference
     super()
 
@@ -43,6 +46,7 @@ export default class Network extends EventEmitter {
     this.ipfs.once('ready', () => this.ipfs.id((err, info) => {
       if (err) { throw err }
       console.log('IPFS node ready with address ' + info.id)
+      this.selfInfo = info
     
       this.room = Room(this.ipfs, 'ampl-experiment')
       this.room.on('peer joined', (peer) => { this.peerJoined(peer)} )
@@ -55,7 +59,7 @@ export default class Network extends EventEmitter {
 
   peerJoined(peer) {
     console.log('peer ' + peer + ' joined')
-    if (peer == info.id) { return } // don't join ourselves
+    if (peer == this.selfInfo.id) { return }
     if (!this.Peers[peer]) {
       this.Peers[peer] = new Automerge.Connection(this.docSet, msg => {
         console.log('Automerge.Connection> send to ' + peer + ':', msg)

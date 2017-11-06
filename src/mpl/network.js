@@ -1,5 +1,3 @@
-import PeerStats from './network/peer-stats'
-
 import EventEmitter from 'events'
 import config from './config'
 
@@ -26,7 +24,6 @@ export default class Network extends EventEmitter {
     })
 
     this.Peers = {}
-    this.connections = {}
 
     this.ipfs = ipfs
 
@@ -48,39 +45,36 @@ export default class Network extends EventEmitter {
       console.log('IPFS node ready with address ' + info.id)
     
       this.room = Room(this.ipfs, 'ampl-experiment')
-    
-      this.room.on('peer joined', (peer) => {
-        console.log('peer ' + peer + ' joined')
-        if (peer == info.id) { return }
-        this.getOrCreatePeer(peer, peer, undefined)
-      })
-      this.room.on('peer left', (peer) => {
-        console.log('peer ' + peer + ' left')
-        delete this.Peers[peer]
-        // this is wrong (i think?)
-      })
-    
-      // send and receive messages    
-      this.room.on('message', (message) => {
-        console.log('Automerge.Connection> receive ' + message.from + ': ' + message.data.toString())
-        this.connections[message.from].receiveMsg(JSON.parse(message.data.toString()))
-      })
+      this.room.on('peer joined', (peer) => { this.peerJoined(peer)} )
+      this.room.on('peer left', (peer) => { this.peerLeft(peer) } )
+      this.room.on('message', (message) => { this.message(message)} )
     }))
 
     this.connected = true
   }
 
-  getOrCreatePeer(id, name, handler) {
-      if (!this.Peers[id]) {
-        this.Peers[id] = name
-        this.connections[id] = new Automerge.Connection(this.docSet, msg => {
-          console.log('Automerge.Connection> send to ' + id + ':', msg)
-          this.room.sendTo(id, JSON.stringify(msg))
-        })
-  
-        this.connections[id].open()
-      }
-      return this.Peers[id]
+  peerJoined(peer) {
+    console.log('peer ' + peer + ' joined')
+    if (peer == info.id) { return } // don't join ourselves
+    if (!this.Peers[peer]) {
+      this.Peers[peer] = new Automerge.Connection(this.docSet, msg => {
+        console.log('Automerge.Connection> send to ' + peer + ':', msg)
+        this.room.sendTo(peer, JSON.stringify(msg))
+      })
+
+      this.Peers[peer].open()
+    }
+    return this.Peers[peer]
+  }
+
+  peerLeft(peer) {
+    console.log('peer ' + peer + ' left')
+    delete this.Peers[peer]
+  }
+
+  message(message) {
+    console.log('Automerge.Connection> receive ' + message.from + ': ' + message.data.toString())
+    this.Peers[message.from].receiveMsg(JSON.parse(message.data.toString()))
   }
     
   broadcastActiveDocId(docId) {
